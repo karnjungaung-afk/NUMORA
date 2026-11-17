@@ -268,6 +268,7 @@ function App() {
               <div className="welcome-row"><div><div className="eyebrow"><span className="live-dot" /> OFFLINE DEMO · CHAPTER 01</div><h1>ยินดีต้อนรับสู่ <em>NUMORA</em></h1><p>ทุกคำตอบคือพลัง ทุกการต่อสู้คือการผจญภัย</p></div><div className="level-card"><small>ADVENTURER LEVEL</small><strong>LV. {save.level.toString().padStart(2, "0")}</strong><Bar value={save.xp} max={xpNeeded} tone="xp" /><small>{save.xp} / {xpNeeded} XP</small></div></div>
 
               <div className="hero-banner">
+                <img className="scene-image hero-scene" src="/art/numora-overlook.svg" alt="" aria-hidden="true" />
                 <div className="hero-glow" /><div className="hero-copy"><div className="hero-kicker">✦ THE RUNE AWAKENS ✦</div><h2>พลังแห่งปัญญา<br /><span>เริ่มต้นที่นี่</span></h2><p>รวบรวมเหล่าผู้พิทักษ์ ฝึกฝนไหวพริบ และเขียนตำนานบทใหม่ด้วยคำตอบของคุณ</p><button className="btn btn-gold" onClick={startBattle}>เริ่มการผจญภัย <span>→</span></button></div>
                 <div className="hero-rune rune-one">✦</div><div className="hero-rune rune-two">◇</div><div className="hero-mascot"><div className="mascot-ring" /><Sprite monster={getMonster("noctyra")} size={190} stage={getEvolutionStage(save.evolutions.noctyra ?? 0)} /></div>
                 <div className="hero-caption"><span>01 / 06</span><span>THE NIGHTFALL GUARDIAN</span></div>
@@ -304,6 +305,7 @@ function App() {
                   <div className="battle-main">
                     <div className="battle-topline"><span>ARENA 01 · MYSTIC GROVE</span><span className="round-badge">ROUND ACTIVE</span></div>
                     <div className="battlefield">
+                      <img className="battlefield-art" src="/art/mystic-grove-arena.svg" alt="" aria-hidden="true" />
                       <div className="battle-stars">✦　　 ·　　✧　　　 ✦　　 ·</div>
                       <div className={"enemy-unit " + (battleEffect?.kind === "hit" || battleEffect?.kind === "critical" ? "unit-hit" : "")}>
                         <div className="unit-info enemy-info"><b>{getMonster(battle.enemyId).name}</b><small>WILD GUARDIAN · LV.{battle.enemyLevel} · {getEvolutionLabel(battle.enemyEvolution)}</small><Bar value={battle.enemyHp} max={battle.enemyMaxHp} /></div>
@@ -332,6 +334,7 @@ function App() {
             <section className="view-stack">
               <PageTitle eyebrow="RUNE ALTAR · SUMMONING GATE" title="แท่นอัญเชิญ" subtitle="เรียกผู้พิทักษ์จากเศษเสี้ยวแห่งรูน — ใช้เหรียญที่ได้รับจากการเล่นเท่านั้น" />
               <div className={"summon-stage " + (summonBusy ? "is-summoning" : "")}>
+                <img className="summon-scene" src="/art/rune-altar.svg" alt="" aria-hidden="true" />
                 <div className="summon-stars">✦　·　✧　　　✦　　·　✦</div>
                 <div className="summon-particle-cloud" aria-hidden="true"><span>✦</span><span>✧</span><span>✦</span><span>·</span><span>✧</span><span>✦</span><span>·</span><span>✧</span></div><div className="portal portal-back" /><div className="portal portal-front" /><div className="portal-core">N</div>
                 <div className="summon-rune rune-a">◇</div><div className="summon-rune rune-b">✧</div><div className="summon-rune rune-c">✦</div>

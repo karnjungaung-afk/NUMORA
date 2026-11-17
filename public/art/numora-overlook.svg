@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" shape-rendering="crispEdges">
+<rect width="1200" height="420" fill="#233640"/>
+<rect y="0" width="1200" height="160" fill="#283d48"/>
+<path d="M0 178 94 112 166 157 267 86 350 147 455 91 545 159 649 100 752 161 862 92 960 154 1068 76 1200 155V290H0Z" fill="#38525a"/>
+<path d="M0 212 126 148 226 199 340 128 470 208 580 147 694 205 826 132 933 204 1047 137 1200 201V330H0Z" fill="#304a4d"/>
+<rect x="820" y="55" width="112" height="112" fill="#dbbf81"/>
+<rect x="836" y="39" width="80" height="16" fill="#ead39d"/>
+<rect x="852" y="23" width="48" height="16" fill="#f0dcae"/>
+<rect x="862" y="55" width="16" height="64" fill="#f3e0ad"/>
+<rect x="894" y="55" width="16" height="64" fill="#f3e0ad"/>
+<rect x="878" y="103" width="16" height="16" fill="#f3e0ad"/>
+<path d="M0 255H1200V420H0Z" fill="#283d38"/>
+<path d="M0 291 136 257 240 295 360 248 472 297 605 251 728 297 853 248 989 296 1107 252 1200 277V420H0Z" fill="#3b5643"/>
+<g fill="#1d3331"><path d="M0 270h28v-45H14v-34H0v34h-14v45Z"/><path d="M68 288h42v-48H96v-38H82v38H68Z"/><path d="M1088 290h50v-60h-16v-44h-18v44h-16Z"/><path d="M1160 278h40v-50h-14v-36h-14v36h-12Z"/></g>
+<g fill="#527153"><rect x="12" y="247" width="42" height="7"/><rect x="74" y="260" width="38" height="7"/><rect x="1090" y="257" width="44" height="7"/><rect x="1162" y="247" width="38" height="7"/></g>
+<g fill="#6f7955"><rect x="0" y="331" width="1200" height="12"/><rect x="0" y="380" width="1200" height="8"/></g>
+<g fill="#26342f"><path d="M0 420V372h160v-24h120v24h146v48Z"/><path d="M820 420v-38h115v-28h120v28h145v38Z"/></g>
+<g fill="#8e9365"><rect x="130" y="310" width="16" height="8"/><rect x="202" y="360" width="24" height="8"/><rect x="630" y="322" width="20" height="8"/><rect x="760" y="375" width="16" height="8"/><rect x="1020" y="330" width="24" height="8"/></g>
+<g fill="#d4c18a"><rect x="100" y="90" width="8" height="8"/><rect x="355" y="60" width="8" height="8"/><rect x="690" y="74" width="8" height="8"/><rect x="1040" y="118" width="8" height="8"/></g>
+</svg>
