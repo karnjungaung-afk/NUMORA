@@ -54,7 +54,7 @@ export const MONSTERS: Monster[] = [
 ];
  
 export const RARITY_LABEL: Record<Rarity, string> = {
-  common: "COMMON", rare: "RARE", epic: "EPIC", legendary: "LEGENDARY",
+  common: "COMMON", rare: "RARE", epic: "EPIC", legendary: "LEGENDARY", mythic: "MYTHIC",
 };
 export const RARITY_COLOR: Record<Rarity, string> = {
   common: "#a8b2c7", rare: "#57b7e8", epic: "#bd8cff", legendary: "#ffc86a", mythic: "#ff79d1",
