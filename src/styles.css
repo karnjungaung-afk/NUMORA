@@ -436,3 +436,28 @@ button, .btn, .nav-button, .monster-card, .stat-tile, .shortcut-card,
   .character-level-panel { grid-template-columns:1fr; }
   .character-level-panel>.character-level-bar { grid-row:2; }
 }
+
+
+/* Three-step guardian evolution forms */
+.evolution-ribbon,.modal-evolution-tag{position:absolute;z-index:3;padding:4px 7px;border:1px solid #5a4b72;background:#111020e8;color:#c1b6d5;font:700 8px 'Chakra Petch';letter-spacing:.65px;box-shadow:2px 2px 0 #080914}
+.evolution-ribbon{left:10px;top:30px}.modal-evolution-tag{bottom:9px;left:50%;transform:translateX(-50%);white-space:nowrap}
+.evolve-stage-1 .evolution-ribbon,.modal-art.evolve-stage-1 .modal-evolution-tag{color:#8fe4bf;border-color:#4c9a78}
+.evolve-stage-2 .evolution-ribbon,.modal-art.evolve-stage-2 .modal-evolution-tag{color:#8bdcff;border-color:#4b9cbd}
+.evolve-stage-3 .evolution-ribbon,.modal-art.evolve-stage-3 .modal-evolution-tag{color:#ffb1e8;border-color:#da76bf;box-shadow:0 0 14px #ed83de55,2px 2px 0 #080914}
+.evolve-sprite{transition:filter .35s ease,transform .35s steps(5,end)}
+.evolve-sprite.evolve-stage-1{filter:drop-shadow(0 0 5px #8fe4bf99) drop-shadow(0 5px 0 #0006)}
+.evolve-sprite.evolve-stage-2{filter:drop-shadow(0 0 8px #75d7ffbb) drop-shadow(0 0 17px #8b8bff66) drop-shadow(0 5px 0 #0006)}
+.evolve-sprite.evolve-stage-3{filter:drop-shadow(0 0 10px #ff9be0) drop-shadow(0 0 23px #a88cff) drop-shadow(0 5px 0 #0006);animation:ultimate-aura 2.2s steps(4,end) infinite}
+.evolution-box{margin:12px 0 10px;padding:12px;border:2px solid #4c426b;background:linear-gradient(135deg,#211d36,#171629);box-shadow:3px 3px 0 #080914}
+.evolution-box.evolution-stage-1{border-color:#4c9a78}.evolution-box.evolution-stage-2{border-color:#4b9cbd}.evolution-box.evolution-stage-3{border-color:#da76bf;background:linear-gradient(135deg,#34203b,#191629 76%)}
+.evolution-box-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.evolution-box-heading small,.evolution-box-heading b{display:block}.evolution-box-heading small{font:9px 'Chakra Petch';color:#a99fbd;letter-spacing:1px}.evolution-box-heading b{margin-top:3px;color:#f3e6ff;font-size:13px}.evolution-box-heading>span{color:#e4c98f;font:700 9px 'Chakra Petch'}
+.evolution-track{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0 8px}
+.evolution-track i{display:grid;place-items:center;height:25px;background:#121222;border:1px solid #4b4460;color:#6f6982;font:700 10px 'Chakra Petch';font-style:normal}
+.evolution-track i.reached{color:#211b30;background:linear-gradient(135deg,#9ee8c2,#d5c4ff);border-color:#f4e2ff;box-shadow:0 0 10px #a98bff66}
+.evolution-box p{margin:7px 0 10px;color:#aaa2bd;font-size:10px;line-height:1.65}
+.btn-evolve{width:100%;justify-content:center;border:1px solid #d7a9e9;color:#26182e;background:linear-gradient(180deg,#f4c3ee,#b47ed2);box-shadow:2px 2px 0 #080914}
+.btn-evolve:disabled{opacity:.42;filter:grayscale(.6);cursor:not-allowed}
+.evolve-stage-3 .art-glow{background:#f28bdc88;box-shadow:0 0 30px #b28aff88}
+@keyframes ultimate-aura{0%,100%{filter:drop-shadow(0 0 7px #ff9be0) drop-shadow(0 5px 0 #0006)}50%{filter:drop-shadow(0 0 14px #ffe0fa) drop-shadow(0 0 25px #9e88ff) drop-shadow(0 5px 0 #0006)}}
+@media(prefers-reduced-motion:reduce){.evolve-sprite.evolve-stage-3{animation:none}}
