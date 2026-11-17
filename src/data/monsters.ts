@@ -1,6 +1,6 @@
 export type Rarity = "common" | "rare" | "epic" | "legendary";
 export type Element = "Nature" | "Flame" | "Aqua" | "Volt" | "Shadow" | "Light" | "Metal" | "Arcane";
-export type Shape = "slime" | "wolf" | "dragon" | "bird" | "knight" | "mage" | "beast" | "phantom" | "golem";
+export type Shape = "slime" | "wolf" | "dragon" | "bird" | "knight" | "mage" | "beast" | "phantom" | "golem" | "fox" | "serpent" | "fairy" | "reaper" | "mech" | "turtle" | "crystal";
 
 export interface Monster {
   id: string;
@@ -36,8 +36,14 @@ export const MONSTERS: Monster[] = [
   { id: "aurion", name: "ออเรียน", epithet: "สิงห์สุริยะ", rarity: "legendary", element: "Light", shape: "beast", colors: c("#efbd55", "#8e542e", "#fff3b0", "#ffffff"), stats: { hp: 145, atk: 38, def: 22 }, skill: "สุริยะคำราม — โบนัสโจมตีสูงเมื่อแก้ถูก", lore: "สิงห์แห่งสุริยะที่ปรากฏเฉพาะวันที่ฟ้าสว่างที่สุด" },
   { id: "zerodrake", name: "ซีโร่เดรก", epithet: "มังกรศูนย์สูญ", rarity: "legendary", element: "Arcane", shape: "dragon", colors: c("#58b8b0", "#244b63", "#c7fff1", "#b38bff"), stats: { hp: 152, atk: 37, def: 25 }, skill: "อัลกอริทึมโบราณ — ลดความเสียหายและโจมตีแรง", lore: "มังกรกลไกที่ถือกำเนิดจากสมการแรกของจักรวาล" },
   { id: "celestia", name: "เซเลสเทีย", epithet: "ผู้ถักทอดวงดาว", rarity: "legendary", element: "Arcane", shape: "mage", colors: c("#9c8be9", "#51427e", "#f0e7ff", "#77edeb"), stats: { hp: 140, atk: 39, def: 21 }, skill: "ดาราพยากรณ์ — เพิ่มเวลาแก้โจทย์เล็กน้อย", lore: "จอมเวทผู้มองเห็นคำตอบของดวงดาวก่อนคำถามจะเกิดขึ้น" },
+  { id: "pyroko", name: "ไพโรโกะ", epithet: "จิ้งจอกประกายดาว", rarity: "common", element: "Flame", shape: "fox", colors: c("#f08b4f", "#753b45", "#ffd39a", "#fff07c"), stats: { hp: 102, atk: 18, def: 12 }, skill: "หางประกาย — เพิ่มพลังโจมตีหลังตอบถูก", lore: "จิ้งจอกตัวน้อยที่สะสมประกายดาวไว้ในหางทั้งสาม" },
+  { id: "coilune", name: "คอยลูน", epithet: "อสรพิษจันทรา", rarity: "rare", element: "Aqua", shape: "serpent", colors: c("#55b8b4", "#275d66", "#b1f4e6", "#d9bbff"), stats: { hp: 118, atk: 22, def: 17 }, skill: "เกล็ดจันทร์ — ลดความเสียหายจากการสวนกลับ", lore: "อสรพิษที่เลื้อยผ่านสายน้ำใต้แสงจันทร์โดยไร้เสียง" },
+  { id: "pollenix", name: "พอลเลนิกซ์", epithet: "ภูตบุปผา", rarity: "rare", element: "Nature", shape: "fairy", colors: c("#d28bb7", "#75466f", "#ffe0f0", "#a9e88e"), stats: { hp: 108, atk: 23, def: 15 }, skill: "ละอองฟื้นฟู — เพิ่มพลังชีวิตเล็กน้อยเมื่อชนะ", lore: "ภูตตัวจิ๋วที่ปลุกดอกไม้ให้บานด้วยเสียงกระดิ่ง" },
+  { id: "runephant", name: "รูนแฟนต์", epithet: "ผลึกผู้พิทักษ์", rarity: "epic", element: "Arcane", shape: "crystal", colors: c("#8a83dc", "#423b7c", "#e0ddff", "#6fe4df"), stats: { hp: 136, atk: 30, def: 20 }, skill: "ผลึกสะท้อน — เพิ่มพลังป้องกันตามคอมโบ", lore: "ผลึกมีชีวิตที่จดจำแสงจากอารยธรรมซึ่งสาบสูญ" },
+  { id: "grimvolt", name: "กริมโวลต์", epithet: "อัศวินจักรกล", rarity: "epic", element: "Volt", shape: "mech", colors: c("#5b9db8", "#294b68", "#bcecff", "#ffe07b"), stats: { hp: 132, atk: 32, def: 20 }, skill: "โอเวอร์ชาร์จ — เพิ่มความเสียหายเมื่อคอมโบต่อเนื่อง", lore: "หุ่นพิทักษ์ที่ตื่นขึ้นเมื่อรูนสายฟ้ากลับมาทำงาน" },
+  { id: "eclipsewyrm", name: "อีคลิปส์เวิร์ม", epithet: "มังกรคราสทมิฬ", rarity: "legendary", element: "Shadow", shape: "reaper", colors: c("#8460b7", "#332541", "#d7b9ff", "#ff8ebf"), stats: { hp: 150, atk: 38, def: 24 }, skill: "คราสนิรันดร์ — ได้รับเกราะเริ่มต้นและโบนัสคอมโบ", lore: "มังกรผู้เฝ้าคราสที่เชื่อมโลกแห่งแสงและเงาเข้าด้วยกัน" },
 ];
-
+ 
 export const RARITY_LABEL: Record<Rarity, string> = {
   common: "COMMON", rare: "RARE", epic: "EPIC", legendary: "LEGENDARY",
 };
