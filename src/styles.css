@@ -628,3 +628,15 @@ body {
   .hero-copy { max-width:76%; }
   .summon-scene { object-position:64% center; }
 }
+
+/* Keep every scene illustration in its intended visual layer. */
+.hero-scene { z-index:0; }
+.hero-banner:before { z-index:1; }
+.hero-copy,.hero-mascot,.hero-rune { z-index:2; }
+.hero-caption { z-index:3; }
+.battlefield-art { z-index:0; }
+.battlefield:before,.battlefield:after { z-index:1; }
+.battle-stars,.ground { z-index:2; }
+.enemy-unit,.player-unit { z-index:3; }
+.summon-scene { z-index:0; }
+.summon-stars,.summon-particle-cloud,.portal,.portal-core,.summon-rune,.summon-stage-copy,.summon-stage-foot { z-index:2; }
