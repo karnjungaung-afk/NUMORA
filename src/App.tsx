@@ -7,7 +7,7 @@ import { BASE_RATES, SHARD_VALUE, SUMMON_COST, summonBatch, upgradeCost } from "
 import { CHARACTER_XP_REWARDS, getCharacterProgress } from "./lib/characterProgress";
 import { getEvolutionBonus, getEvolutionLabel, getEvolutionStage, getEvolutionTitle, getNextEvolution, getStageForLevel } from "./lib/evolution";
 
-type View = "home" | "battle" | "summon" | "collection" | "online" | "settings";
+type View = "home" | "battle" | "summon" | "collection" | "online" | "settings" | "admin";
 type BattlePhase = "choose" | "question" | "won" | "lost";
 interface BattleState {
   playerId: string;
@@ -45,7 +45,14 @@ function rarityText(rarity: Rarity) {
   return RARITY_LABEL[rarity];
 }
 
+function guardianXpForLevel(targetLevel: number) {
+  let total = 0;
+  for (let level = 1; level < targetLevel; level += 1) total += 50 + level * 50;
+  return total;
+}
+
 function App() {
+  const isDevMode = import.meta.env.DEV;
   const [save, setSave] = useState<SaveData>(() => loadSave());
   const [view, setView] = useState<View>("home");
   const [battle, setBattle] = useState<BattleState | null>(null);
@@ -207,6 +214,64 @@ function App() {
     setNotice(monster.name + " อัปเกรดสำเร็จ!");
   }
 
+  function adminAddCoins(amount: number) {
+    if (!isDevMode) return;
+    setSave((current) => ({ ...current, coins: current.coins + amount }));
+    setNotice("เพิ่ม " + amount.toLocaleString("en-US") + " Coins แล้ว");
+  }
+
+  function adminUnlockAll() {
+    if (!isDevMode) return;
+    setSave((current) => ({
+      ...current,
+      owned: [...new Set([...current.owned, ...MONSTERS.map((monster) => monster.id)])],
+    }));
+    setNotice("ปลดล็อกผู้พิทักษ์ทั้งหมดแล้ว");
+  }
+
+  function adminGrantShards(amount: number) {
+    if (!isDevMode) return;
+    setSave((current) => ({
+      ...current,
+      shards: { ...current.shards, [current.selected]: (current.shards[current.selected] ?? 0) + amount },
+    }));
+    setNotice("เพิ่ม " + amount + " Shards ให้ " + getMonster(save.selected).name);
+  }
+
+  function adminSetEvolution(stage: 1 | 2 | 3) {
+    if (!isDevMode) return;
+    const requiredLevel = stage === 1 ? 10 : stage === 2 ? 20 : 30;
+    const requiredXp = guardianXpForLevel(requiredLevel);
+    setSave((current) => ({
+      ...current,
+      monsterXp: {
+        ...current.monsterXp,
+        [current.selected]: Math.max(current.monsterXp[current.selected] ?? 0, requiredXp),
+      },
+      evolutions: { ...current.evolutions, [current.selected]: stage },
+    }));
+    setNotice(getMonster(save.selected).name + " ถูกตั้งเป็น " + getEvolutionLabel(stage) + " แล้ว");
+  }
+
+  function adminMaxAllGuardians() {
+    if (!isDevMode) return;
+    const allIds = MONSTERS.map((monster) => monster.id);
+    const maxXp = guardianXpForLevel(30);
+    setSave((current) => ({
+      ...current,
+      owned: [...new Set([...current.owned, ...allIds])],
+      monsterXp: {
+        ...current.monsterXp,
+        ...Object.fromEntries(allIds.map((id) => [id, maxXp])),
+      },
+      evolutions: {
+        ...current.evolutions,
+        ...Object.fromEntries(allIds.map((id) => [id, 3])),
+      },
+    }));
+    setNotice("ปลดล็อกและวิวัฒนาการผู้พิทักษ์ทุกตัวเป็น Stage MAX แล้ว");
+  }
+
   const detailMonster = selectedDetail ? getMonster(selectedDetail) : null;
   const detailProgress = detailMonster ? getCharacterProgress(save.monsterXp[detailMonster.id] ?? 0) : null;
   const detailEvolutionStage = detailMonster ? getEvolutionStage(save.evolutions[detailMonster.id] ?? 0) : 0;
@@ -259,6 +324,7 @@ function App() {
           <div className="side-divider" />
           <div className="side-label">SYSTEM</div>
           <NavButton active={view === "settings"} icon="⚙" label="ตั้งค่า" onClick={() => setView("settings")} />
+          {isDevMode && <NavButton active={view === "admin"} icon="⚒" label="Admin Tools" onClick={() => setView("admin")} />}
           <div className="sidebar-bottom"><div className="season-mark">✦</div><span>THE RUNE SEASON</span><small>Chapter 01 · Awakening</small></div>
         </aside>
 
@@ -374,6 +440,34 @@ function App() {
               <div className="settings-panel"><div className="settings-row"><div><b>เสียงประกอบ</b><small>เปิดหรือปิดเสียงเอฟเฟกต์ในเกม</small></div><button className={"toggle " + (save.sound ? "on" : "")} onClick={() => setSave({ ...save, sound: !save.sound })}><span /></button></div><div className="settings-row"><div><b>จับเวลาโจทย์</b><small>ปิดได้เพื่อฝึกฝนโดยไม่จำกัดเวลา</small></div><button className={"toggle " + (save.timed ? "on" : "")} onClick={() => setSave({ ...save, timed: !save.timed })}><span /></button></div><div className="settings-row"><div><b>ระดับความยาก</b><small>กำหนดช่วงตัวเลขและความซับซ้อนของโจทย์</small></div><select value={save.difficulty} onChange={(e) => setSave({ ...save, difficulty: e.target.value as SaveData["difficulty"] })}><option value="easy">เริ่มต้น</option><option value="normal">ปานกลาง</option><option value="hard">ท้าทาย</option></select></div><div className="settings-row"><div><b>คู่หูหลัก</b><small>มอนสเตอร์ที่ใช้เริ่มการต่อสู้</small></div><select value={save.selected} onChange={(e) => setSave({ ...save, selected: e.target.value })}>{ownedMonsters.map((monster) => <option key={monster.id} value={monster.id}>{monster.name}</option>)}</select></div></div>
               <div className="save-note"><span>◈</span><div><b>ข้อมูลเกมบันทึกในอุปกรณ์นี้</b><small>ความคืบหน้า เหรียญ มอนสเตอร์ และประวัติกาชาจะอยู่ใน Local Storage ของเบราว์เซอร์นี้</small></div></div>
               <button className="btn btn-ghost danger-btn" onClick={() => { if (window.confirm("ต้องการรีเซ็ตข้อมูลเกมทั้งหมดหรือไม่?")) { window.localStorage.removeItem("numora-save-v1"); setSave(loadSave()); setBattle(null); setView("home"); } }}>รีเซ็ตข้อมูลเกม</button>
+            </section>
+          )}
+
+          {view === "admin" && isDevMode && (
+            <section className="view-stack">
+              <PageTitle eyebrow="DEVELOPER CONSOLE · LOCAL ONLY" title="Admin Tools" subtitle="เครื่องมือสำหรับทดสอบระบบเกมและข้อมูลผู้พิทักษ์" />
+              <div className="admin-warning">
+                <span className="admin-warning-icon">⚒</span>
+                <div><b>DEVELOPMENT BUILD ONLY</b><p>เมนูนี้แสดงเฉพาะเมื่อรันด้วย <code>npm run dev</code> เท่านั้น และแก้ไขเซฟในเบราว์เซอร์เครื่องนี้ ไม่ใช่ระบบสิทธิ์แอดมินสำหรับเซิร์ฟเวอร์ออนไลน์</p></div>
+              </div>
+              <div className="admin-current">
+                <div><small>ACTIVE GUARDIAN</small><b>{selected.name}</b><span>{getEvolutionLabel(getEvolutionStage(save.evolutions[selected.id] ?? 0))} · LV.{getCharacterProgress(save.monsterXp[selected.id] ?? 0).level}</span></div>
+                <div><small>WALLET</small><b>◈ {save.coins.toLocaleString("en-US")}</b><span>{ownedMonsters.length}/{MONSTERS.length} Guardians</span></div>
+              </div>
+              <div className="section-heading"><div><span className="eyebrow">ECONOMY & COLLECTION</span><h2>ทรัพยากรและการปลดล็อก</h2></div></div>
+              <div className="admin-grid">
+                <button className="admin-action" onClick={() => adminAddCoins(10000)}><span>◈</span><b>+10,000 Coins</b><small>เพิ่มเหรียญทดสอบ</small></button>
+                <button className="admin-action" onClick={() => adminGrantShards(500)}><span>✧</span><b>+500 Shards</b><small>ให้ผู้พิทักษ์ที่เลือกอยู่</small></button>
+                <button className="admin-action" onClick={adminUnlockAll}><span>▦</span><b>Unlock All</b><small>ปลดล็อกมอนสเตอร์ทั้งหมด</small></button>
+              </div>
+              <div className="section-heading"><div><span className="eyebrow">EVOLUTION TESTING</span><h2>ทดสอบร่างวิวัฒนาการ</h2></div></div>
+              <div className="admin-evolution-grid">
+                <button className="admin-action stage-one" onClick={() => adminSetEvolution(1)}><span>Ⅰ</span><b>Set Stage 1</b><small>ตั้งคู่หูเป็นเลเวล 10 · ร่างปลุกพลัง</small></button>
+                <button className="admin-action stage-two" onClick={() => adminSetEvolution(2)}><span>Ⅱ</span><b>Set Stage 2</b><small>ตั้งคู่หูเป็นเลเวล 20 · ร่างจุติ</small></button>
+                <button className="admin-action stage-max" onClick={() => adminSetEvolution(3)}><span>✦</span><b>Set Stage MAX</b><small>ตั้งคู่หูเป็นเลเวล 30 · ร่างสมบูรณ์</small></button>
+                <button className="admin-action stage-max" onClick={adminMaxAllGuardians}><span>♛</span><b>MAX ALL GUARDIANS</b><small>ปลดล็อกทั้งหมด · เลเวล 30 · Stage MAX</small></button>
+              </div>
+              <p className="admin-footnote">การเปลี่ยนแปลงจะถูกบันทึกลง Local Storage อัตโนมัติ ใช้ปุ่มรีเซ็ตข้อมูลเกมในหน้าตั้งค่าเพื่อเริ่มทดสอบใหม่</p>
             </section>
           )}
         </main>
