@@ -461,3 +461,56 @@ button, .btn, .nav-button, .monster-card, .stat-tile, .shortcut-card,
 .evolve-stage-3 .art-glow{background:#f28bdc88;box-shadow:0 0 30px #b28aff88}
 @keyframes ultimate-aura{0%,100%{filter:drop-shadow(0 0 7px #ff9be0) drop-shadow(0 5px 0 #0006)}50%{filter:drop-shadow(0 0 14px #ffe0fa) drop-shadow(0 0 25px #9e88ff) drop-shadow(0 5px 0 #0006)}}
 @media(prefers-reduced-motion:reduce){.evolve-sprite.evolve-stage-3{animation:none}}
+
+
+/* Guardian-specific attack choreography: element defines the projectile,
+   while the creature shape defines its movement style. */
+.guardian-attacking { z-index: 6; }
+.guardian-attacking .pixel-sprite { position: relative; z-index: 2; }
+.guardian-attacking::after {
+  content:"";position:absolute;z-index:4;left:50%;top:45%;
+  width:clamp(42px,8vw,76px);height:clamp(42px,8vw,76px);
+  pointer-events:none;opacity:0;transform:translate(-50%,-50%) scale(.35);
+  background:var(--attack-color,#fff0a8);
+  box-shadow:0 0 0 3px #171426,0 0 18px var(--attack-color,#fff0a8);
+  clip-path:polygon(48% 0,60% 35%,100% 42%,66% 58%,76% 100%,45% 68%,8% 90%,30% 52%,0 25%,40% 38%);
+  animation:attack-sigil .58s steps(6,end) forwards;
+}
+.guardian-attacking::before {
+  content:"";position:absolute;z-index:3;left:50%;top:50%;width:94px;height:8px;
+  pointer-events:none;opacity:0;
+  background:linear-gradient(90deg,transparent,var(--attack-color,#fff0a8),#fff,transparent);
+  box-shadow:0 0 12px var(--attack-color,#fff0a8);
+  animation:attack-trail .48s steps(5,end) forwards;
+}
+.attack-flame{--attack-color:#ff9856}
+.attack-flame::after{clip-path:polygon(50% 0,72% 25%,65% 45%,100% 56%,66% 100%,44% 70%,18% 91%,28% 55%,0 35%,39% 39%)}
+.attack-aqua{--attack-color:#78ddf4}
+.attack-aqua::after{width:92px;height:40px;border-radius:50%;clip-path:polygon(0 55%,18% 35%,35% 47%,52% 10%,69% 44%,84% 25%,100% 55%,83% 78%,62% 63%,42% 95%,23% 66%)}
+.attack-volt{--attack-color:#f8e56f}
+.attack-volt::after{clip-path:polygon(55% 0,35% 40%,58% 40%,24% 100%,43% 55%,24% 55%)}
+.attack-nature{--attack-color:#9be58b}
+.attack-nature::after{width:90px;height:50px;clip-path:polygon(0 70%,25% 45%,38% 0,52% 42%,100% 28%,68% 62%,77% 100%,43% 70%,18% 100%)}
+.attack-shadow{--attack-color:#c18aff}
+.attack-shadow::after{width:80px;height:80px;border-radius:50%;clip-path:polygon(50% 0,61% 35%,100% 50%,61% 65%,50% 100%,39% 65%,0 50%,39% 35%)}
+.attack-light{--attack-color:#fff0a3}
+.attack-light::after{width:88px;height:88px;clip-path:polygon(50% 0,58% 39%,100% 50%,58% 61%,50% 100%,42% 61%,0 50%,42% 39%)}
+.attack-metal{--attack-color:#c5d5e4}
+.attack-metal::after{width:76px;height:58px;clip-path:polygon(0 35%,30% 35%,30% 0,70% 0,70% 35%,100% 35%,100% 70%,70% 70%,70% 100%,30% 100%,30% 70%,0 70%)}
+.attack-arcane{--attack-color:#9fe9e5}
+.attack-arcane::after{width:88px;height:88px;background:transparent;border:4px solid var(--attack-color);box-shadow:inset 0 0 0 5px #fff7,0 0 18px var(--attack-color);clip-path:polygon(50% 0,62% 32%,100% 50%,62% 68%,50% 100%,38% 68%,0 50%,38% 32%)}
+.attack-form-pounce{animation:guardian-pounce .52s steps(6,end)}
+.attack-form-breath{animation:guardian-breath .62s steps(6,end)}
+.attack-form-spell{animation:guardian-spell .6s steps(6,end)}
+.attack-form-slash{animation:guardian-slash .46s steps(5,end)}
+.attack-form-impact{animation:guardian-impact .5s steps(5,end)}
+.attack-form-burst{animation:guardian-burst .52s steps(6,end)}
+@keyframes guardian-pounce{0%,100%{transform:translateX(0) translateY(0)}38%{transform:translateX(24px) translateY(-17px)}70%{transform:translateX(8px) translateY(0)}}
+@keyframes guardian-breath{0%,100%{transform:translateX(0) scale(1)}28%{transform:translateX(7px) scale(1.08)}60%{transform:translateX(22px) scale(1.02)}}
+@keyframes guardian-spell{0%,100%{transform:translateY(0)}35%{transform:translateY(-13px) scale(1.08)}70%{transform:translateY(2px) scale(.98)}}
+@keyframes guardian-slash{0%,100%{transform:translateX(0) rotate(0)}35%{transform:translateX(18px) rotate(-7deg)}65%{transform:translateX(-5px) rotate(3deg)}}
+@keyframes guardian-impact{0%,100%{transform:translateY(0)}35%{transform:translateY(-5px) scale(1.13)}68%{transform:translateY(4px) scale(.94)}}
+@keyframes guardian-burst{0%,100%{transform:scale(1)}38%{transform:scale(1.12)}70%{transform:scale(.96)}}
+@keyframes attack-sigil{0%{opacity:0;transform:translate(-50%,-50%) scale(.25) rotate(-35deg)}28%{opacity:1;transform:translate(-50%,-50%) scale(1.15) rotate(15deg)}100%{opacity:0;transform:translate(-50%,-75%) scale(.65) rotate(65deg)}}
+@keyframes attack-trail{0%{opacity:0;transform:translate(-50%,-50%) scaleX(.1) rotate(-22deg)}30%{opacity:1;transform:translate(-50%,-50%) scaleX(1) rotate(-22deg)}100%{opacity:0;transform:translate(40%,-120%) scaleX(.3) rotate(-22deg)}}
+@media(prefers-reduced-motion:reduce){.guardian-attacking,.guardian-attacking::before,.guardian-attacking::after{animation:none!important}}
