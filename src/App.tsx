@@ -45,6 +45,21 @@ function rarityText(rarity: Rarity) {
   return RARITY_LABEL[rarity];
 }
 
+function attackStyleFor(monster: Monster): string {
+  const elementStyles: Record<Monster["element"], string> = {
+    Nature:"nature", Flame:"flame", Aqua:"aqua", Volt:"volt",
+    Shadow:"shadow", Light:"light", Metal:"metal", Arcane:"arcane",
+  };
+  const shapeStyles: Partial<Record<Monster["shape"], string>> = {
+    wolf:"pounce", fox:"pounce", beast:"pounce", deer:"pounce",
+    dragon:"breath", phoenix:"breath", hydra:"breath", serpent:"breath", manta:"breath",
+    mage:"spell", fairy:"spell", wisp:"spell", angel:"spell", phantom:"spell",
+    knight:"slash", samurai:"slash", reaper:"slash",
+    mech:"impact", golem:"impact", beetle:"impact", clockwork:"impact", turtle:"impact",
+  };
+  return "attack-" + elementStyles[monster.element] + " attack-form-" + (shapeStyles[monster.shape] ?? "burst");
+}
+
 function guardianXpForLevel(targetLevel: number) {
   let total = 0;
   for (let level = 1; level < targetLevel; level += 1) total += 50 + level * 50;
@@ -56,7 +71,7 @@ function App() {
   const [save, setSave] = useState<SaveData>(() => loadSave());
   const [view, setView] = useState<View>("home");
   const [battle, setBattle] = useState<BattleState | null>(null);
-  const [battleEffect, setBattleEffect] = useState<{ id: number; kind: "hit" | "critical" | "miss"; label: string } | null>(null);
+  const [battleEffect, setBattleEffect] = useState<{ id: number; kind: "hit" | "critical" | "miss"; label: string; attacker: "player" | "enemy"; attackStyle: string } | null>(null);
   const [answer, setAnswer] = useState("");
   const [notice, setNotice] = useState("");
   const [summonResults, setSummonResults] = useState<ReturnType<typeof summonBatch> extends infer T ? T extends { results: infer R } ? R : never : never>([]);
@@ -140,7 +155,7 @@ function App() {
       const nextHp = Math.max(0, battle.enemyHp - damage);
       const nextStreak = battle.streak + 1;
       const effectId = Date.now();
-      setBattleEffect({ id: effectId, kind: speedBonus >= 3 || battle.streak >= 2 ? "critical" : "hit", label: speedBonus >= 3 || battle.streak >= 2 ? "CRITICAL -" + damage : "-" + damage + " HP" });
+      setBattleEffect({ id: effectId, kind: speedBonus >= 3 || battle.streak >= 2 ? "critical" : "hit", label: speedBonus >= 3 || battle.streak >= 2 ? "CRITICAL -" + damage : "-" + damage + " HP", attacker: "player", attackStyle: attackStyleFor(player) });
       window.setTimeout(() => setBattleEffect((current) => current?.id === effectId ? null : current), 950);
       if (nextHp === 0) {
         setBattle({ ...battle, enemyHp: 0, phase: "won", question: null, streak: nextStreak,
@@ -164,7 +179,7 @@ function App() {
       }
     } else {
       const effectId = Date.now();
-      setBattleEffect({ id: effectId, kind: "miss", label: "MISS!" });
+      setBattleEffect({ id: effectId, kind: "miss", label: "MISS!", attacker: "enemy", attackStyle: attackStyleFor(enemy) });
       window.setTimeout(() => setBattleEffect((current) => current?.id === effectId ? null : current), 950);
       const incoming = Math.max(7, Math.round((enemy.stats.atk + getEvolutionBonus(battle.enemyEvolution).atk) * (1 + Math.max(0, battle.enemyLevel - 1) * 0.02) * 0.72 - (player.stats.def + getEvolutionBonus(battle.playerEvolution).def) * 0.13));
       const nextHp = Math.max(0, battle.playerHp - incoming);
@@ -373,11 +388,11 @@ function App() {
                     <div className="battlefield">
                       <img className="battlefield-art" src="/art/mystic-grove-arena.svg" alt="" aria-hidden="true" />
                       <div className="battle-stars">✦　　 ·　　✧　　　 ✦　　 ·</div>
-                      <div className={"enemy-unit " + (battleEffect?.kind === "hit" || battleEffect?.kind === "critical" ? "unit-hit" : "")}>
+                      <div className={"enemy-unit " + (battleEffect?.kind === "hit" || battleEffect?.kind === "critical" ? "unit-hit" : "") + (battleEffect?.attacker === "enemy" ? " guardian-attacking " + battleEffect.attackStyle : "")}>
                         <div className="unit-info enemy-info"><b>{getMonster(battle.enemyId).name}</b><small>WILD GUARDIAN · LV.{battle.enemyLevel} · {getEvolutionLabel(battle.enemyEvolution)}</small><Bar value={battle.enemyHp} max={battle.enemyMaxHp} /></div>
                         <Sprite key={"enemy-" + (battleEffect?.id ?? "idle")} monster={getMonster(battle.enemyId)} stage={battle.enemyEvolution} size={156} className={"sprite-float rarity-aura aura-" + getMonster(battle.enemyId).rarity + (battleEffect?.kind === "hit" || battleEffect?.kind === "critical" ? " sprite-hit" : "")} />
                       </div>
-                      <div className={"player-unit " + (battleEffect?.kind === "miss" ? "unit-hit" : "")}>
+                      <div className={"player-unit " + (battleEffect?.kind === "miss" ? "unit-hit" : "") + (battleEffect?.attacker === "player" ? " guardian-attacking " + battleEffect.attackStyle : "")}>
                         <Sprite key={"player-" + (battleEffect?.id ?? "idle")} monster={getMonster(battle.playerId)} stage={battle.playerEvolution} size={168} className={"sprite-float rarity-aura aura-" + getMonster(battle.playerId).rarity + (battleEffect?.kind === "miss" ? " sprite-hit" : "")} />
                         <div className="unit-info player-info"><b>{getMonster(battle.playerId).name}</b><small>YOUR GUARDIAN · LV.{battle.playerLevel} · {getEvolutionLabel(battle.playerEvolution)}</small><Bar value={battle.playerHp} max={battle.playerMaxHp} /></div>
                       </div>
