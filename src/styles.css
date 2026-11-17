@@ -499,12 +499,12 @@ button, .btn, .nav-button, .monster-card, .stat-tile, .shortcut-card,
 .attack-metal::after{width:76px;height:58px;clip-path:polygon(0 35%,30% 35%,30% 0,70% 0,70% 35%,100% 35%,100% 70%,70% 70%,70% 100%,30% 100%,30% 70%,0 70%)}
 .attack-arcane{--attack-color:#9fe9e5}
 .attack-arcane::after{width:88px;height:88px;background:transparent;border:4px solid var(--attack-color);box-shadow:inset 0 0 0 5px #fff7,0 0 18px var(--attack-color);clip-path:polygon(50% 0,62% 32%,100% 50%,62% 68%,50% 100%,38% 68%,0 50%,38% 32%)}
-.attack-form-pounce{animation:guardian-pounce .52s steps(6,end)}
-.attack-form-breath{animation:guardian-breath .62s steps(6,end)}
-.attack-form-spell{animation:guardian-spell .6s steps(6,end)}
-.attack-form-slash{animation:guardian-slash .46s steps(5,end)}
-.attack-form-impact{animation:guardian-impact .5s steps(5,end)}
-.attack-form-burst{animation:guardian-burst .52s steps(6,end)}
+.attack-form-pounce .pixel-sprite{animation:guardian-pounce .52s steps(6,end)}
+.attack-form-breath .pixel-sprite{animation:guardian-breath .62s steps(6,end)}
+.attack-form-spell .pixel-sprite{animation:guardian-spell .6s steps(6,end)}
+.attack-form-slash .pixel-sprite{animation:guardian-slash .46s steps(5,end)}
+.attack-form-impact .pixel-sprite{animation:guardian-impact .5s steps(5,end)}
+.attack-form-burst .pixel-sprite{animation:guardian-burst .52s steps(6,end)}
 @keyframes guardian-pounce{0%,100%{transform:translateX(0) translateY(0)}38%{transform:translateX(24px) translateY(-17px)}70%{transform:translateX(8px) translateY(0)}}
 @keyframes guardian-breath{0%,100%{transform:translateX(0) scale(1)}28%{transform:translateX(7px) scale(1.08)}60%{transform:translateX(22px) scale(1.02)}}
 @keyframes guardian-spell{0%,100%{transform:translateY(0)}35%{transform:translateY(-13px) scale(1.08)}70%{transform:translateY(2px) scale(.98)}}
@@ -513,4 +513,4 @@ button, .btn, .nav-button, .monster-card, .stat-tile, .shortcut-card,
 @keyframes guardian-burst{0%,100%{transform:scale(1)}38%{transform:scale(1.12)}70%{transform:scale(.96)}}
 @keyframes attack-sigil{0%{opacity:0;transform:translate(-50%,-50%) scale(.25) rotate(-35deg)}28%{opacity:1;transform:translate(-50%,-50%) scale(1.15) rotate(15deg)}100%{opacity:0;transform:translate(-50%,-75%) scale(.65) rotate(65deg)}}
 @keyframes attack-trail{0%{opacity:0;transform:translate(-50%,-50%) scaleX(.1) rotate(-22deg)}30%{opacity:1;transform:translate(-50%,-50%) scaleX(1) rotate(-22deg)}100%{opacity:0;transform:translate(40%,-120%) scaleX(.3) rotate(-22deg)}}
-@media(prefers-reduced-motion:reduce){.guardian-attacking,.guardian-attacking::before,.guardian-attacking::after{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.guardian-attacking .pixel-sprite,.guardian-attacking::before,.guardian-attacking::after{animation:none!important}}
