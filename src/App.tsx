@@ -81,7 +81,7 @@ function App() {
 
   function startBattle() {
     const player = getMonster(save.selected);
-    const candidates = MONSTERS.filter((monster) => monster.id !== player.id);
+    const candidates = MONSTERS.filter((monster) => monster.id !== player.id && monster.stats.atk <= player.stats.atk + 7);
     const enemy = candidates[Math.floor(Math.random() * candidates.length)] ?? MONSTERS[1]!;
     const playerUpgrade = save.upgrades[player.id] ?? 0;
     const enemyMax = enemy.stats.hp + save.level * 3;
@@ -120,8 +120,12 @@ function App() {
       if (nextHp === 0) {
         setBattle({ ...battle, enemyHp: 0, phase: "won", question: null, streak: nextStreak,
           log: ["โจมตีสำเร็จ! " + enemy.name + " พ่ายแพ้แล้ว", "ตอบถูก! สร้างความเสียหาย " + damage, ...battle.log].slice(0, 8) });
-        setSave((current) => ({ ...current, coins: current.coins + 120, xp: current.xp + 65,
-          wins: current.wins + 1, level: current.xp + 65 >= current.level * 100 ? current.level + 1 : current.level }));
+        setSave((current) => {
+          let xp = current.xp + 65;
+          let level = current.level;
+          while (xp >= level * 100) { xp -= level * 100; level += 1; }
+          return { ...current, coins: current.coins + 120, xp, level, wins: current.wins + 1 };
+        });
       } else {
         setBattle({ ...battle, enemyHp: nextHp, phase: "choose", question: null, streak: nextStreak,
           log: ["ตอบถูก! โจมตี " + enemy.name + " -" + damage + " HP", ...battle.log].slice(0, 8) });
@@ -200,7 +204,7 @@ function App() {
         <main className="main-content">
           {view === "home" && (
             <section className="view-stack">
-              <div className="welcome-row"><div><div className="eyebrow"><span className="live-dot" /> WORLD ONLINE · CHAPTER 01</div><h1>ยินดีต้อนรับสู่ <em>NUMORA</em></h1><p>ทุกคำตอบคือพลัง ทุกการต่อสู้คือการผจญภัย</p></div><div className="level-card"><small>ADVENTURER LEVEL</small><strong>LV. {save.level.toString().padStart(2, "0")}</strong><Bar value={save.xp} max={xpNeeded} tone="xp" /><small>{save.xp} / {xpNeeded} XP</small></div></div>
+              <div className="welcome-row"><div><div className="eyebrow"><span className="live-dot" /> OFFLINE DEMO · CHAPTER 01</div><h1>ยินดีต้อนรับสู่ <em>NUMORA</em></h1><p>ทุกคำตอบคือพลัง ทุกการต่อสู้คือการผจญภัย</p></div><div className="level-card"><small>ADVENTURER LEVEL</small><strong>LV. {save.level.toString().padStart(2, "0")}</strong><Bar value={save.xp} max={xpNeeded} tone="xp" /><small>{save.xp} / {xpNeeded} XP</small></div></div>
 
               <div className="hero-banner">
                 <div className="hero-glow" /><div className="hero-copy"><div className="hero-kicker">✦ THE RUNE AWAKENS ✦</div><h2>พลังแห่งปัญญา<br /><span>เริ่มต้นที่นี่</span></h2><p>รวบรวมเหล่าผู้พิทักษ์ ฝึกฝนไหวพริบ และเขียนตำนานบทใหม่ด้วยคำตอบของคุณ</p><button className="btn btn-gold" onClick={startBattle}>เริ่มการผจญภัย <span>→</span></button></div>
@@ -287,7 +291,7 @@ function App() {
             <section className="view-stack">
               <PageTitle eyebrow="RUNE NETWORK · MULTIPLAYER" title="สนามประลองออนไลน์" subtitle="ท้าดวลเพื่อน แข่งขันตอบโจทย์เดียวกันเพื่อแย่งสิทธิ์โจมตีก่อน" />
               <div className="online-status"><span className="status-indicator" /><div><b>REALTIME SERVER NOT CONNECTED</b><small>ระบบห้องและ PvP จะแสดงสถานะพร้อมใช้งานเมื่อเชื่อมต่อ backend</small></div><span className="status-pill">OFFLINE</span></div>
-              <div className="online-grid"><div className="online-card"><div className="online-icon">⌘</div><span className="eyebrow">CREATE NEW ROOM</span><h2>สร้างห้องประลอง</h2><p>สร้างรหัสห้องส่วนตัว แล้วชวนเพื่อนเข้ามาประลองคณิตศาสตร์</p><label>ชื่อนักผจญภัย</label><input value={playerName} onChange={(e) => setPlayerName(e.target.value.slice(0, 18))} /><button className="btn btn-violet" disabled>ต้องเชื่อมต่อ Realtime ก่อน</button></div><div className="online-card"><div className="online-icon">⌕</div><span className="eyebrow">JOIN A ROOM</span><h2>เข้าร่วมห้อง</h2><p>กรอกรหัสห้อง 5 ตัวอักษรจากเพื่อนของคุณ</p><label>รหัสห้อง</label><input value={roomCode} onChange={(e) => setRoomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5))} placeholder="เช่น A7K2P" /><button className="btn btn-gold" disabled={roomCode.length !== 5}>ต้องเชื่อมต่อ Realtime ก่อน</button></div></div>
+              <div className="online-grid"><div className="online-card"><div className="online-icon">⌘</div><span className="eyebrow">CREATE NEW ROOM</span><h2>สร้างห้องประลอง</h2><p>สร้างรหัสห้องส่วนตัว แล้วชวนเพื่อนเข้ามาประลองคณิตศาสตร์</p><label>ชื่อนักผจญภัย</label><input value={playerName} onChange={(e) => setPlayerName(e.target.value.slice(0, 18))} /><button className="btn btn-violet" disabled>ต้องเชื่อมต่อ Realtime ก่อน</button></div><div className="online-card"><div className="online-icon">⌕</div><span className="eyebrow">JOIN A ROOM</span><h2>เข้าร่วมห้อง</h2><p>กรอกรหัสห้อง 5 ตัวอักษรจากเพื่อนของคุณ</p><label>รหัสห้อง</label><input value={roomCode} onChange={(e) => setRoomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5))} placeholder="เช่น A7K2P" /><button className="btn btn-gold" disabled>ต้องเชื่อมต่อ Realtime ก่อน</button></div></div>
               <div className="online-explainer"><b>รูปแบบการต่อสู้ PvP ที่วางไว้</b><div className="online-steps"><span><i>01</i>ผู้เล่นทั้งสองเข้าห้องและกดพร้อม</span><span><i>02</i>เซิร์ฟเวอร์ส่งโจทย์ชุดเดียวกัน</span><span><i>03</i>ผู้ตอบถูกก่อนรับสิทธิ์โจมตี</span><span><i>04</i>ตรวจคำตอบบนเซิร์ฟเวอร์ ป้องกันการโกง</span></div><small>ต้องเพิ่มฐานข้อมูลห้อง, ระบบ Realtime, matchmaking และ server-side answer validation ก่อนเปิด PvP จริง</small></div>
             </section>
           )}
