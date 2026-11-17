@@ -3,23 +3,26 @@ import type { SaveData, SummonRecord } from "./save";
 
 export const SUMMON_COST = { single: 100, ten: 900 } as const;
 export const BASE_RATES: Record<Rarity, number> = {
-  common: 55,
+  common: 52,
   rare: 28,
-  epic: 13,
-  legendary: 4,
+  epic: 14,
+  legendary: 5,
+  mythic: 1,
 };
 export const SHARD_VALUE: Record<Rarity, number> = {
   common: 5,
   rare: 10,
   epic: 25,
   legendary: 50,
+  mythic: 120,
 };
 
 function baseRarity(): Rarity {
   const roll = Math.random() * 100;
-  if (roll < BASE_RATES.legendary) return "legendary";
-  if (roll < BASE_RATES.legendary + BASE_RATES.epic) return "epic";
-  if (roll < BASE_RATES.legendary + BASE_RATES.epic + BASE_RATES.rare) return "rare";
+  if (roll < BASE_RATES.mythic) return "mythic";
+  if (roll < BASE_RATES.mythic + BASE_RATES.legendary) return "legendary";
+  if (roll < BASE_RATES.mythic + BASE_RATES.legendary + BASE_RATES.epic) return "epic";
+  if (roll < BASE_RATES.mythic + BASE_RATES.legendary + BASE_RATES.epic + BASE_RATES.rare) return "rare";
   return "common";
 }
 
@@ -44,6 +47,8 @@ export function summonBatch(current: SaveData, count: 1 | 10): SummonBatch | nul
     shards: { ...current.shards },
     epicPity: current.epicPity,
     legendaryPity: current.legendaryPity,
+    mythicPity: current.mythicPity ?? 0,
+    monsterXp: { ...current.monsterXp },
     history: [...current.history],
   };
   const results: SummonBatch["results"] = [];
@@ -52,13 +57,17 @@ export function summonBatch(current: SaveData, count: 1 | 10): SummonBatch | nul
     const base = baseRarity();
     const reachesEpicPity = next.epicPity + 1 >= 10;
     const reachesLegendaryPity = next.legendaryPity + 1 >= 50;
+    const reachesMythicPity = next.mythicPity + 1 >= 100;
     let rarity = base;
     let guaranteed = false;
 
-    if (reachesLegendaryPity) {
+    if (reachesMythicPity) {
+      rarity = "mythic";
+      guaranteed = true;
+    } else if (reachesLegendaryPity && base !== "mythic") {
       rarity = "legendary";
       guaranteed = true;
-    } else if (reachesEpicPity && base !== "epic" && base !== "legendary") {
+    } else if (reachesEpicPity && base !== "epic" && base !== "legendary" && base !== "mythic") {
       rarity = "epic";
       guaranteed = true;
     }
@@ -73,7 +82,8 @@ export function summonBatch(current: SaveData, count: 1 | 10): SummonBatch | nul
       next.owned.push(monster.id);
     }
 
-    if (rarity === "legendary") {
+    next.mythicPity = rarity === "mythic" ? 0 : next.mythicPity + 1;
+    if (rarity === "legendary" || rarity === "mythic") {
       next.legendaryPity = 0;
       next.epicPity = 0;
     } else {

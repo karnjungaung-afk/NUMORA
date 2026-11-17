@@ -19,6 +19,8 @@ export interface SaveData {
   upgrades: Record<string, number>;
   epicPity: number;
   legendaryPity: number;
+  mythicPity: number;
+  monsterXp: Record<string, number>;
   history: SummonRecord[];
   sound: boolean;
   timed: boolean;
@@ -28,7 +30,7 @@ export const STORAGE_KEY = "numora-save-v1";
 export const DEFAULT_SAVE: SaveData = {
   coins: 420, xp: 0, level: 1, wins: 0, losses: 0,
   owned: ["mossbit", "embercub", "bubblit"], selected: "mossbit",
-  shards: {}, upgrades: {}, epicPity: 0, legendaryPity: 0, history: [],
+  shards: {}, upgrades: {}, epicPity: 0, legendaryPity: 0, mythicPity: 0, monsterXp: {}, history: [],
   sound: true, timed: true, difficulty: "easy",
 };
 
@@ -44,6 +46,8 @@ export function loadSave(): SaveData {
       owned: Array.isArray(parsed.owned) ? parsed.owned : DEFAULT_SAVE.owned,
       shards: parsed.shards && typeof parsed.shards === "object" ? parsed.shards : {},
       upgrades: parsed.upgrades && typeof parsed.upgrades === "object" ? parsed.upgrades : {},
+      monsterXp: parsed.monsterXp && typeof parsed.monsterXp === "object" ? parsed.monsterXp : {},
+      mythicPity: typeof parsed.mythicPity === "number" ? parsed.mythicPity : 0,
       history: Array.isArray(parsed.history) ? parsed.history.slice(0, 40) : [],
     };
   } catch {

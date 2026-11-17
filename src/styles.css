@@ -190,3 +190,249 @@ button, .btn, .nav-button, .monster-card, .stat-tile, .shortcut-card,
   .sidebar { border-bottom: 3px solid #302847; }
   .hero-banner { box-shadow: 3px 3px 0 #080914,inset 0 0 0 3px #211a38; }
 }
+
+
+/* ─────────────────────────────────────────────────────────────
+   GUARDIAN PROGRESSION + RARITY FX
+   ───────────────────────────────────────────────────────────── */
+.character-xp-track,
+.character-level-bar {
+  height: 6px;
+  overflow: hidden;
+  background: #0d1020;
+  border: 1px solid #51466b;
+  margin-top: 7px;
+}
+.character-xp-track i,
+.character-level-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg,#66d4d2,#a98bff,#f0d28e);
+  box-shadow: 0 0 9px #9c83ff88;
+  transition: width .45s steps(8,end);
+}
+.character-level-panel {
+  display: grid;
+  grid-template-columns: auto minmax(80px,1fr);
+  align-items: center;
+  gap: 7px 14px;
+  padding: 12px;
+  margin: 13px 0;
+  border: 2px solid #4c426b;
+  background: #17162b;
+  box-shadow: 3px 3px 0 #080914;
+}
+.character-level-panel>div:first-child small,
+.character-level-panel>div:first-child b {
+  display: block;
+}
+.character-level-panel small {
+  color: #9e96b5;
+  font: 9px 'Chakra Petch';
+  letter-spacing: .8px;
+}
+.character-level-panel b {
+  color: #f5d997;
+  font: 700 17px 'Chakra Petch';
+}
+.character-level-panel>.character-level-bar {
+  margin: 0;
+}
+.character-level-panel>small {
+  grid-column: 1/-1;
+}
+
+.rarity-mythic { --rarity: #ff79d1; }
+.rarity-mythic .rarity-label,
+.rarity-mythic .result-rarity { color: #ff9be0; }
+.rarity-mythic.monster-card,
+.result-card.rarity-mythic,
+.monster-modal.rarity-mythic {
+  border-color: #ff79d1;
+  box-shadow: 0 0 0 1px #ffb4eb66, 0 0 22px #ec72d333, 4px 4px 0 #080914;
+}
+.monster-card.rarity-mythic {
+  background:
+    repeating-linear-gradient(135deg,transparent 0 9px,#ff79d10b 10px 11px),
+    linear-gradient(145deg,#35203d,#171528 70%);
+}
+.monster-card.rarity-mythic .art-glow,
+.result-card.rarity-mythic:before {
+  background: #ff6bcf66;
+  box-shadow: 0 0 34px #ff6bcf66;
+}
+.monster-card.rarity-legendary .art-glow,
+.result-card.rarity-legendary:before { background: #ffc86a55; }
+.monster-card.rarity-epic .art-glow,
+.result-card.rarity-epic:before { background: #bd8cff55; }
+.monster-card.rarity-rare .art-glow,
+.result-card.rarity-rare:before { background: #57b7e855; }
+
+.rarity-aura {
+  transform-origin: center;
+}
+.aura-rare { filter: drop-shadow(0 0 4px #57b7e866) drop-shadow(0 5px 0 rgba(0,0,0,.35)); }
+.aura-epic { filter: drop-shadow(0 0 7px #bd8cffaa) drop-shadow(0 5px 0 rgba(0,0,0,.35)); }
+.aura-legendary { filter: drop-shadow(0 0 9px #ffc86aaa) drop-shadow(0 5px 0 rgba(0,0,0,.35)); }
+.aura-mythic { filter: drop-shadow(0 0 6px #ff79d1) drop-shadow(0 0 14px #a77bffbb) drop-shadow(0 5px 0 rgba(0,0,0,.35)); }
+.monster-card.rarity-legendary .monster-art:after,
+.monster-card.rarity-mythic .monster-art:after {
+  content: "✦";
+  position: absolute;
+  right: 18%;
+  top: 17%;
+  color: var(--rarity);
+  font: 18px 'Chakra Petch';
+  text-shadow: 0 0 12px currentColor;
+  animation: rarity-twinkle 1.8s steps(2,end) infinite;
+  pointer-events: none;
+}
+.monster-card.rarity-mythic .monster-art:after {
+  content: "✧";
+  font-size: 23px;
+  animation-duration: 1.2s;
+}
+@keyframes rarity-twinkle {
+  0%,100% { opacity: .25; transform: scale(.75) rotate(0); }
+  50% { opacity: 1; transform: scale(1.15) rotate(45deg); }
+}
+
+/* Battle impact: readable, short, and reduced-motion friendly. */
+.battle-fx {
+  pointer-events: none;
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  top: 47%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transform: translate(-50%,-50%);
+  font: 700 clamp(18px,3vw,28px) 'Chakra Petch';
+  letter-spacing: 1px;
+  white-space: nowrap;
+  text-shadow: 3px 3px 0 #111020, 0 0 13px currentColor;
+  animation: battle-fx-pop .9s steps(7,end) forwards;
+}
+.battle-fx .fx-spark {
+  font-size: 17px;
+  animation: fx-spin .7s steps(5,end) infinite;
+}
+.fx-hit { color: #ffe29b; }
+.fx-critical {
+  color: #fff2a3;
+  font-size: clamp(22px,4vw,36px);
+  text-shadow: 3px 3px 0 #8b3e57, 0 0 22px #ffb45b;
+}
+.fx-miss { color: #9ed7ed; }
+@keyframes battle-fx-pop {
+  0% { opacity: 0; transform: translate(-50%,-15%) scale(.55); }
+  18% { opacity: 1; transform: translate(-50%,-58%) scale(1.2); }
+  42% { opacity: 1; transform: translate(-50%,-68%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%,-115%) scale(.85); }
+}
+@keyframes fx-spin { to { transform: rotate(180deg) scale(1.2); } }
+.unit-hit { animation: unit-damaged .34s steps(3,end); }
+.sprite-hit { animation: sprite-impact .42s steps(4,end) !important; }
+@keyframes unit-damaged {
+  0%,100% { transform: translateX(0); filter: none; }
+  25% { transform: translateX(-7px); filter: brightness(2); }
+  55% { transform: translateX(6px); filter: brightness(1.4); }
+}
+@keyframes sprite-impact {
+  0%,100% { transform: translateX(0) scale(1); filter: brightness(1); }
+  30% { transform: translateX(-5px) scale(1.06); filter: brightness(2) saturate(.5); }
+  65% { transform: translateX(4px) scale(.97); filter: brightness(1.5); }
+}
+.battlefield:has(.fx-critical):after {
+  animation: arena-flash .42s steps(3,end);
+}
+@keyframes arena-flash {
+  0%,100% { filter: brightness(1); }
+  35% { filter: brightness(1.65) saturate(1.3); }
+}
+
+/* Summon portal and reveal choreography. */
+.summon-stage.is-summoning .portal-back { animation: portal-charge .82s steps(8,end) infinite; }
+.summon-stage.is-summoning .portal-front { animation: portal-surge .42s steps(4,end) infinite; }
+.summon-stage.is-summoning .portal-core { animation: core-burst .65s steps(5,end) infinite; }
+.summon-particle-cloud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.summon-particle-cloud span {
+  position: absolute;
+  color: #f8ddaa;
+  text-shadow: 0 0 12px #d6aaff;
+  opacity: .5;
+  animation: summon-drift 4s steps(8,end) infinite;
+}
+.summon-particle-cloud span:nth-child(1) { left: 55%; top: 20%; animation-delay: -.5s; }
+.summon-particle-cloud span:nth-child(2) { left: 68%; top: 72%; animation-delay: -1.3s; }
+.summon-particle-cloud span:nth-child(3) { left: 83%; top: 30%; animation-delay: -2s; }
+.summon-particle-cloud span:nth-child(4) { left: 48%; top: 70%; animation-delay: -2.5s; }
+.summon-particle-cloud span:nth-child(5) { left: 76%; top: 14%; animation-delay: -3s; }
+.summon-particle-cloud span:nth-child(6) { left: 91%; top: 65%; animation-delay: -1.8s; }
+.summon-particle-cloud span:nth-child(7) { left: 60%; top: 48%; animation-delay: -3.2s; }
+.summon-particle-cloud span:nth-child(8) { left: 88%; top: 45%; animation-delay: -1s; }
+@keyframes portal-charge {
+  0% { transform: translateY(-50%) rotate(0) scale(.93); filter: brightness(1); }
+  50% { transform: translateY(-50%) rotate(25deg) scale(1.09); filter: brightness(1.8); }
+  100% { transform: translateY(-50%) rotate(50deg) scale(.93); filter: brightness(1.1); }
+}
+@keyframes portal-surge {
+  0%,100% { box-shadow: 0 0 0 4px #584477, 0 0 20px #d0a5ff, inset 0 0 20px #cf9bff; }
+  50% { box-shadow: 0 0 0 8px #8361ad, 0 0 52px #ffe3aa, inset 0 0 45px #f9caff; }
+}
+@keyframes core-burst {
+  0%,100% { transform: translate(50%,-50%) scale(.9); filter: brightness(1); }
+  50% { transform: translate(50%,-50%) scale(1.22); filter: brightness(1.5); }
+}
+@keyframes summon-drift {
+  0% { opacity: 0; transform: translateY(20px) scale(.6) rotate(0); }
+  30% { opacity: .95; }
+  100% { opacity: 0; transform: translateY(-55px) scale(1.4) rotate(90deg); }
+}
+.result-card {
+  opacity: 0;
+  animation: card-reveal .55s steps(6,end) forwards;
+}
+.result-card.rarity-legendary {
+  background-image: linear-gradient(145deg,#423523,#201a2a);
+}
+.result-card.rarity-mythic {
+  background-image: linear-gradient(145deg,#492345,#241a3c 62%,#20203a);
+}
+.result-card.rarity-legendary:after,
+.result-card.rarity-mythic:after {
+  content: "✦";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: var(--rarity);
+  font-size: 17px;
+  text-shadow: 0 0 12px currentColor;
+  animation: rarity-twinkle 1.4s steps(2,end) infinite;
+}
+.result-card.rarity-mythic:after { content: "✧"; font-size: 22px; }
+@keyframes card-reveal {
+  0% { opacity: 0; transform: translateY(18px) scale(.8); filter: brightness(2); }
+  65% { opacity: 1; transform: translateY(-3px) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rarity-aura, .monster-card.rarity-legendary .monster-art:after,
+  .monster-card.rarity-mythic .monster-art:after, .battle-fx,
+  .unit-hit, .sprite-hit, .summon-stage.is-summoning .portal-back,
+  .summon-stage.is-summoning .portal-front, .summon-stage.is-summoning .portal-core,
+  .summon-particle-cloud span, .result-card, .result-card:after {
+    animation: none !important;
+  }
+  .result-card { opacity: 1; }
+}
+@media(max-width:760px) {
+  .character-level-panel { grid-template-columns:1fr; }
+  .character-level-panel>.character-level-bar { grid-row:2; }
+}
