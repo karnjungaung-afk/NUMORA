@@ -4,7 +4,8 @@ import { ELEMENT_LABEL, MONSTERS, RARITY_COLOR, RARITY_LABEL, getMonster, type M
 import { createQuestion, isCorrectAnswer, type MathCategory, type MathQuestion } from "./lib/math";
 import { loadSave, saveGame, type SaveData } from "./lib/save";
 import { BASE_RATES, SHARD_VALUE, SUMMON_COST, summonBatch, upgradeCost } from "./lib/gacha";
-app import
+import { CHARACTER_XP_REWARDS, getCharacterProgress } from "./lib/characterProgress";
+import { getEvolutionBonus, getEvolutionLabel, getEvolutionStage, getEvolutionTitle, getNextEvolution, getStageForLevel } from "./lib/evolution";
 
 type View = "home" | "battle" | "summon" | "collection" | "online" | "settings";
 type BattlePhase = "choose" | "question" | "won" | "lost";
