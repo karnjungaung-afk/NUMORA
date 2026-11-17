@@ -122,7 +122,7 @@ function App() {
     if (correct) {
       const upgrade = save.upgrades[player.id] ?? 0;
       const speedBonus = save.timed ? Math.floor(battle.timeLeft / 5) : 0;
-      const damage = Math.round((13 + player.stats.atk * 0.82 + upgrade * 1.5) * (1 + Math.min(battle.streak, 4) * 0.07) + speedBonus);
+      const damage = Math.round((13 + player.stats.atk * 0.82 + upgrade * 1.5 + battle.playerLevel * 0.55) * (1 + Math.min(battle.streak, 4) * 0.07) + speedBonus);
       const nextHp = Math.max(0, battle.enemyHp - damage);
       const nextStreak = battle.streak + 1;
       const effectId = Date.now();
@@ -152,7 +152,7 @@ function App() {
       const effectId = Date.now();
       setBattleEffect({ id: effectId, kind: "miss", label: "MISS!" });
       window.setTimeout(() => setBattleEffect((current) => current?.id === effectId ? null : current), 950);
-      const incoming = Math.max(7, Math.round(enemy.stats.atk * 0.72 - player.stats.def * 0.13));
+      const incoming = Math.max(7, Math.round(enemy.stats.atk * (1 + Math.max(0, battle.enemyLevel - 1) * 0.02) * 0.72 - player.stats.def * 0.13));
       const nextHp = Math.max(0, battle.playerHp - incoming);
       if (nextHp === 0) {
         setBattle({ ...battle, playerHp: 0, phase: "lost", question: null, streak: 0,
@@ -286,7 +286,7 @@ function App() {
                     <div className="battle-console">
                       {battle.phase === "choose" && <><div className="console-heading"><span className="console-diamond">◆</span><div><b>เลือกท่าโจมตี</b><small>SELECT YOUR MATH SKILL</small></div><span className="combo-pill">COMBO × {battle.streak}</span></div><div className="skill-grid">{categories.map((category) => <button key={category.id} className="skill-card" onClick={() => chooseCategory(category.id)}><strong>{category.glyph}</strong><span>{category.title}</span><small>{category.label}</small></button>)}</div></>}
                       {battle.phase === "question" && battle.question && <div className="question-panel"><div className="question-head"><span>{battle.category === "equation" ? "EQUATION CHALLENGE" : battle.category === "multiply" ? "MULTIPLICATION CHALLENGE" : "ARITHMETIC CHALLENGE"}</span>{save.timed ? <b className={battle.timeLeft <= 5 ? "timer danger" : "timer"}>◷ {battle.timeLeft}s</b> : <b className="timer">UNTIMED</b>}</div><div className="question-expression">{battle.question.prompt}</div><form className="answer-form" onSubmit={(event) => { event.preventDefault(); resolveAnswer(answer); }}><input autoFocus value={answer} onChange={(event) => setAnswer(event.target.value.slice(0, 8))} inputMode="numeric" placeholder="ใส่คำตอบ..." aria-label="คำตอบโจทย์คณิตศาสตร์" /><button className="btn btn-gold" disabled={!answer.trim()}>โจมตี <span>➤</span></button></form><small className="hint-line">✦ {battle.question.hint}</small></div>}
-                      {(battle.phase === "won" || battle.phase === "lost") && <div className="battle-result"><div className="result-emblem">{battle.phase === "won" ? "✦" : "◇"}</div><span className="eyebrow">{battle.phase === "won" ? "VICTORY · +120 COINS · +65 XP" : "DEFEAT · +25 COINS · +10 XP"}</span><h2>{battle.phase === "won" ? "ชัยชนะเป็นของคุณ!" : "กลับไปฝึกฝนอีกครั้ง"}</h2><p>{battle.phase === "won" ? "คุณพิสูจน์พลังแห่งปัญญาได้สำเร็จ" : "ทุกความผิดพลาดคือบทเรียนของนักผจญภัย"}</p><button className="btn btn-gold" onClick={() => { setBattle(null); setView("home"); }}>กลับหน้าหลัก <span>→</span></button><button className="btn btn-ghost" onClick={() => { setBattle(null); startBattle(); }}>สู้อีกครั้ง</button></div>}
+                      {(battle.phase === "won" || battle.phase === "lost") && <div className="battle-result"><div className="result-emblem">{battle.phase === "won" ? "✦" : "◇"}</div><span className="eyebrow">{battle.phase === "won" ? "VICTORY · +120 COINS · +65 XP · +35 GUARDIAN XP" : "DEFEAT · +25 COINS · +10 XP · +12 GUARDIAN XP"}</span><h2>{battle.phase === "won" ? "ชัยชนะเป็นของคุณ!" : "กลับไปฝึกฝนอีกครั้ง"}</h2><p>{battle.phase === "won" ? "คุณพิสูจน์พลังแห่งปัญญาได้สำเร็จ" : "ทุกความผิดพลาดคือบทเรียนของนักผจญภัย"}</p><button className="btn btn-gold" onClick={() => { setBattle(null); setView("home"); }}>กลับหน้าหลัก <span>→</span></button><button className="btn btn-ghost" onClick={() => { setBattle(null); startBattle(); }}>สู้อีกครั้ง</button></div>}
                     </div>
                   </div>
                   <aside className="battle-log"><div className="log-title"><b>บันทึกการต่อสู้</b><small>BATTLE LOG</small></div>{battle.log.map((line, index) => <p key={index} className={index === 0 ? "log-current" : ""}>› {line}</p>)}<div className="battle-log-tip">TIP: การตอบถูกต่อเนื่องจะเพิ่มคอมโบและความเสียหาย</div></aside>
