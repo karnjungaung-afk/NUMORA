@@ -1,6 +1,6 @@
-export type Rarity = "common" | "rare" | "epic" | "legendary";
+export type Rarity = "common" | "rare" | "epic" | "legendary" | "mythic";
 export type Element = "Nature" | "Flame" | "Aqua" | "Volt" | "Shadow" | "Light" | "Metal" | "Arcane";
-export type Shape = "slime" | "wolf" | "dragon" | "bird" | "knight" | "mage" | "beast" | "phantom" | "golem" | "fox" | "serpent" | "fairy" | "reaper" | "mech" | "turtle" | "crystal";
+export type Shape = "slime" | "wolf" | "dragon" | "bird" | "knight" | "mage" | "beast" | "phantom" | "golem" | "fox" | "serpent" | "fairy" | "reaper" | "mech" | "turtle" | "crystal" | "beetle" | "deer" | "manta" | "samurai" | "wisp" | "phoenix" | "hydra" | "clockwork" | "angel";
 
 export interface Monster {
   id: string;
@@ -42,13 +42,22 @@ export const MONSTERS: Monster[] = [
   { id: "runephant", name: "รูนแฟนต์", epithet: "ผลึกผู้พิทักษ์", rarity: "epic", element: "Arcane", shape: "crystal", colors: c("#8a83dc", "#423b7c", "#e0ddff", "#6fe4df"), stats: { hp: 136, atk: 30, def: 20 }, skill: "ผลึกสะท้อน — เพิ่มพลังป้องกันตามคอมโบ", lore: "ผลึกมีชีวิตที่จดจำแสงจากอารยธรรมซึ่งสาบสูญ" },
   { id: "grimvolt", name: "กริมโวลต์", epithet: "อัศวินจักรกล", rarity: "epic", element: "Volt", shape: "mech", colors: c("#5b9db8", "#294b68", "#bcecff", "#ffe07b"), stats: { hp: 132, atk: 32, def: 20 }, skill: "โอเวอร์ชาร์จ — เพิ่มความเสียหายเมื่อคอมโบต่อเนื่อง", lore: "หุ่นพิทักษ์ที่ตื่นขึ้นเมื่อรูนสายฟ้ากลับมาทำงาน" },
   { id: "eclipsewyrm", name: "อีคลิปส์เวิร์ม", epithet: "มังกรคราสทมิฬ", rarity: "legendary", element: "Shadow", shape: "reaper", colors: c("#8460b7", "#332541", "#d7b9ff", "#ff8ebf"), stats: { hp: 150, atk: 38, def: 24 }, skill: "คราสนิรันดร์ — ได้รับเกราะเริ่มต้นและโบนัสคอมโบ", lore: "มังกรผู้เฝ้าคราสที่เชื่อมโลกแห่งแสงและเงาเข้าด้วยกัน" },
+  { id: "craggle", name: "แครกเกิล", epithet: "ด้วงศิลาผู้พิทักษ์", rarity: "common", element: "Metal", shape: "beetle", colors: c("#9b9a78", "#4f564a", "#e2dba2", "#7dd4a1"), stats: { hp: 118, atk: 17, def: 16 }, skill: "เกราะหินผา — ลดความเสียหายที่ได้รับเล็กน้อย", lore: "ด้วงตัวจิ๋วที่สะสมแร่หายากไว้บนกระดอง" },
+  { id: "silvarant", name: "ซิลวาแรนต์", epithet: "กวางแห่งแสงเหนือ", rarity: "rare", element: "Light", shape: "deer", colors: c("#b6c8c4", "#526f73", "#f1fff1", "#a8d8ff"), stats: { hp: 116, atk: 24, def: 16 }, skill: "เขาออโรรา — เพิ่มพลังโจมตีเมื่อคอมโบต่อเนื่อง", lore: "กวางสง่างามที่วิ่งผ่านม่านแสงเหนือและทิ้งประกายไว้บนหิมะ" },
+  { id: "cloudray", name: "คลาวด์เรย์", epithet: "กระเบนเวหา", rarity: "rare", element: "Aqua", shape: "manta", colors: c("#559fbd", "#31516d", "#c2f2ff", "#e8cbff"), stats: { hp: 112, atk: 23, def: 17 }, skill: "กระแสเมฆ — เพิ่มโอกาสรับโบนัสเวลา", lore: "กระเบนแห่งทะเลเมฆที่โบยบินเหนือเกาะลอยฟ้า" },
+  { id: "tempestronin", name: "เทมเพสต์โรนิน", epithet: "ซามูไรพายุ", rarity: "epic", element: "Volt", shape: "samurai", colors: c("#4f9cae", "#253f60", "#c4f4ef", "#f3d36f"), stats: { hp: 128, atk: 33, def: 19 }, skill: "คมดาบวายุ — เพิ่มความเสียหายเมื่อทำคอมโบ", lore: "นักรบผู้ฝึกฝนดาบใต้พายุสายฟ้ามานับพันปี" },
+  { id: "auralis", name: "ออราลิส", epithet: "วิญญาณแห่งรุ่งอรุณ", rarity: "epic", element: "Light", shape: "wisp", colors: c("#d5a7e9", "#684d91", "#fff0ff", "#82e6da"), stats: { hp: 124, atk: 31, def: 21 }, skill: "ประกายอรุณ — ฟื้นพลังเล็กน้อยหลังตอบถูก", lore: "ดวงวิญญาณแห่งแสงแรกที่ชี้นำผู้เดินทางในคืนมืด" },
+  { id: "solflare", name: "โซลแฟลร์", epithet: "ฟีนิกซ์สุริยัน", rarity: "legendary", element: "Flame", shape: "phoenix", colors: c("#e97845", "#813b48", "#ffe5a0", "#fff27c"), stats: { hp: 151, atk: 39, def: 23 }, skill: "คืนชีพจากเถ้าถ่าน — ได้รับพลังโจมตีเพิ่มเมื่อ HP ต่ำ", lore: "ฟีนิกซ์ผู้กางปีกเหนือดวงอาทิตย์และเกิดใหม่จากเปลวเพลิง" },
+  { id: "nightmaw", name: "ไนต์มอว์", epithet: "ไฮดราแห่งรัตติกาล", rarity: "legendary", element: "Shadow", shape: "hydra", colors: c("#76529b", "#302442", "#d8b9ee", "#ff86bb"), stats: { hp: 158, atk: 38, def: 26 }, skill: "สามเศียรนิรันดร์ — ได้รับเกราะเพิ่มเมื่อเริ่มการต่อสู้", lore: "อสูรสามเศียรที่เฝ้าประตูสู่ห้วงมิติที่ไม่มีแสง" },
+  { id: "chronarch", name: "โครนาร์ค", epithet: "ผู้คุมกาลเวลา", rarity: "mythic", element: "Arcane", shape: "clockwork", colors: c("#c39b5c", "#604653", "#fff0b7", "#81e2e7"), stats: { hp: 166, atk: 43, def: 29 }, skill: "หยุดห้วงเวลา — เพิ่มเวลาตอบโจทย์และพลังป้องกัน", lore: "ผู้พิทักษ์จักรวาลที่เก็บวินาทีสุดท้ายของดวงดาวไว้ในแกนกลไก" },
+  { id: "seraphyne", name: "เซราฟีน", epithet: "เทวทูตแห่งดวงดาว", rarity: "mythic", element: "Light", shape: "angel", colors: c("#d6c4f5", "#67518c", "#ffffff", "#f7d77d"), stats: { hp: 162, atk: 45, def: 27 }, skill: "ดาวตกพิพากษา — เพิ่มโบนัสความเสียหายจากคำตอบที่ถูกต้อง", lore: "ผู้พิทักษ์แห่งหมู่ดาวที่ปรากฏเพียงครั้งเดียวในรอบพันปี" },
 ];
  
 export const RARITY_LABEL: Record<Rarity, string> = {
-  common: "COMMON", rare: "RARE", epic: "EPIC", legendary: "LEGENDARY",
+  common: "COMMON", rare: "RARE", epic: "EPIC", legendary: "LEGENDARY", mythic: "MYTHIC",
 };
 export const RARITY_COLOR: Record<Rarity, string> = {
-  common: "#a8b2c7", rare: "#57b7e8", epic: "#bd8cff", legendary: "#ffc86a",
+  common: "#a8b2c7", rare: "#57b7e8", epic: "#bd8cff", legendary: "#ffc86a", mythic: "#ff79d1",
 };
 export const ELEMENT_LABEL: Record<Element, string> = {
   Nature: "พฤกษา", Flame: "เพลิง", Aqua: "วารี", Volt: "สายฟ้า",

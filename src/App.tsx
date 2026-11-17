@@ -4,12 +4,18 @@ import { ELEMENT_LABEL, MONSTERS, RARITY_COLOR, RARITY_LABEL, getMonster, type M
 import { createQuestion, isCorrectAnswer, type MathCategory, type MathQuestion } from "./lib/math";
 import { loadSave, saveGame, type SaveData } from "./lib/save";
 import { BASE_RATES, SHARD_VALUE, SUMMON_COST, summonBatch, upgradeCost } from "./lib/gacha";
+import { CHARACTER_XP_REWARDS, getCharacterProgress } from "./lib/characterProgress";
+import { getEvolutionBonus, getEvolutionLabel, getEvolutionStage, getEvolutionTitle, getNextEvolution, getStageForLevel } from "./lib/evolution";
 
 type View = "home" | "battle" | "summon" | "collection" | "online" | "settings";
 type BattlePhase = "choose" | "question" | "won" | "lost";
 interface BattleState {
   playerId: string;
   enemyId: string;
+  playerLevel: number;
+  enemyLevel: number;
+  playerEvolution: number;
+  enemyEvolution: number;
   playerHp: number;
   enemyHp: number;
   playerMaxHp: number;
@@ -43,6 +49,7 @@ function App() {
   const [save, setSave] = useState<SaveData>(() => loadSave());
   const [view, setView] = useState<View>("home");
   const [battle, setBattle] = useState<BattleState | null>(null);
+  const [battleEffect, setBattleEffect] = useState<{ id: number; kind: "hit" | "critical" | "miss"; label: string } | null>(null);
   const [answer, setAnswer] = useState("");
   const [notice, setNotice] = useState("");
   const [summonResults, setSummonResults] = useState<ReturnType<typeof summonBatch> extends infer T ? T extends { results: infer R } ? R : never : never>([]);
@@ -84,11 +91,19 @@ function App() {
     const candidates = MONSTERS.filter((monster) => monster.id !== player.id && monster.stats.atk <= player.stats.atk + 7);
     const enemy = candidates[Math.floor(Math.random() * candidates.length)] ?? MONSTERS[1]!;
     const playerUpgrade = save.upgrades[player.id] ?? 0;
-    const enemyMax = enemy.stats.hp + save.level * 3;
-    const playerMax = player.stats.hp + playerUpgrade * 5 + save.level * 2;
+    const playerProgress = getCharacterProgress(save.monsterXp[player.id] ?? 0);
+    const enemyLevel = Math.max(1, playerProgress.level + (Math.random() > 0.72 ? 1 : 0));
+    const playerEvolution = getEvolutionStage(save.evolutions[player.id] ?? 0);
+    const enemyEvolution = getStageForLevel(enemyLevel);
+    const playerBonus = getEvolutionBonus(playerEvolution);
+    const enemyBonus = getEvolutionBonus(enemyEvolution);
+    const enemyMax = enemy.stats.hp + save.level * 3 + enemyLevel * 2 + enemyBonus.hp;
+    const playerMax = player.stats.hp + playerUpgrade * 5 + playerProgress.level * 2 + playerBonus.hp;
     setAnswer("");
+    setBattleEffect(null);
     setBattle({
       playerId: player.id, enemyId: enemy.id,
+      playerLevel: playerProgress.level, enemyLevel, playerEvolution, enemyEvolution,
       playerHp: playerMax, enemyHp: enemyMax,
       playerMaxHp: playerMax, enemyMaxHp: enemyMax,
       phase: "choose", question: null, category: null,
@@ -114,9 +129,12 @@ function App() {
     if (correct) {
       const upgrade = save.upgrades[player.id] ?? 0;
       const speedBonus = save.timed ? Math.floor(battle.timeLeft / 5) : 0;
-      const damage = Math.round((13 + player.stats.atk * 0.82 + upgrade * 1.5) * (1 + Math.min(battle.streak, 4) * 0.07) + speedBonus);
+      const damage = Math.round((13 + (player.stats.atk + getEvolutionBonus(battle.playerEvolution).atk) * 0.82 + upgrade * 1.5 + battle.playerLevel * 0.55) * (1 + Math.min(battle.streak, 4) * 0.07) + speedBonus);
       const nextHp = Math.max(0, battle.enemyHp - damage);
       const nextStreak = battle.streak + 1;
+      const effectId = Date.now();
+      setBattleEffect({ id: effectId, kind: speedBonus >= 3 || battle.streak >= 2 ? "critical" : "hit", label: speedBonus >= 3 || battle.streak >= 2 ? "CRITICAL -" + damage : "-" + damage + " HP" });
+      window.setTimeout(() => setBattleEffect((current) => current?.id === effectId ? null : current), 950);
       if (nextHp === 0) {
         setBattle({ ...battle, enemyHp: 0, phase: "won", question: null, streak: nextStreak,
           log: ["โจมตีสำเร็จ! " + enemy.name + " พ่ายแพ้แล้ว", "ตอบถูก! สร้างความเสียหาย " + damage, ...battle.log].slice(0, 8) });
@@ -124,19 +142,35 @@ function App() {
           let xp = current.xp + 65;
           let level = current.level;
           while (xp >= level * 100) { xp -= level * 100; level += 1; }
-          return { ...current, coins: current.coins + 120, xp, level, wins: current.wins + 1 };
+          return {
+            ...current,
+            coins: current.coins + 120,
+            xp,
+            level,
+            wins: current.wins + 1,
+            monsterXp: { ...current.monsterXp, [player.id]: (current.monsterXp[player.id] ?? 0) + CHARACTER_XP_REWARDS.victory },
+          };
         });
       } else {
         setBattle({ ...battle, enemyHp: nextHp, phase: "choose", question: null, streak: nextStreak,
           log: ["ตอบถูก! โจมตี " + enemy.name + " -" + damage + " HP", ...battle.log].slice(0, 8) });
       }
     } else {
-      const incoming = Math.max(7, Math.round(enemy.stats.atk * 0.72 - player.stats.def * 0.13));
+      const effectId = Date.now();
+      setBattleEffect({ id: effectId, kind: "miss", label: "MISS!" });
+      window.setTimeout(() => setBattleEffect((current) => current?.id === effectId ? null : current), 950);
+      const incoming = Math.max(7, Math.round((enemy.stats.atk + getEvolutionBonus(battle.enemyEvolution).atk) * (1 + Math.max(0, battle.enemyLevel - 1) * 0.02) * 0.72 - (player.stats.def + getEvolutionBonus(battle.playerEvolution).def) * 0.13));
       const nextHp = Math.max(0, battle.playerHp - incoming);
       if (nextHp === 0) {
         setBattle({ ...battle, playerHp: 0, phase: "lost", question: null, streak: 0,
           log: ["พลาดจังหวะ! " + enemy.name + " โจมตีกลับ -" + incoming + " HP", "การต่อสู้สิ้นสุดลง", ...battle.log].slice(0, 8) });
-        setSave((current) => ({ ...current, coins: current.coins + 25, xp: current.xp + 10, losses: current.losses + 1 }));
+        setSave((current) => ({
+          ...current,
+          coins: current.coins + 25,
+          xp: current.xp + 10,
+          losses: current.losses + 1,
+          monsterXp: { ...current.monsterXp, [player.id]: (current.monsterXp[player.id] ?? 0) + CHARACTER_XP_REWARDS.defeat },
+        }));
       } else {
         setBattle({ ...battle, playerHp: nextHp, phase: "choose", question: null, streak: 0,
           log: [(raw.trim() ? "คำตอบยังไม่ถูกต้อง" : "หมดเวลา!"), enemy.name + " โจมตีกลับ -" + incoming + " HP", ...battle.log].slice(0, 8) });
@@ -174,6 +208,33 @@ function App() {
   }
 
   const detailMonster = selectedDetail ? getMonster(selectedDetail) : null;
+  const detailProgress = detailMonster ? getCharacterProgress(save.monsterXp[detailMonster.id] ?? 0) : null;
+  const detailEvolutionStage = detailMonster ? getEvolutionStage(save.evolutions[detailMonster.id] ?? 0) : 0;
+  const detailEvolutionBonus = getEvolutionBonus(detailEvolutionStage);
+  const nextEvolution = getNextEvolution(detailEvolutionStage);
+  const detailShardCount = detailMonster ? (save.shards[detailMonster.id] ?? 0) : 0;
+
+  function evolveMonster(monster: Monster) {
+    const currentStage = getEvolutionStage(save.evolutions[monster.id] ?? 0);
+    const next = getNextEvolution(currentStage);
+    const character = getCharacterProgress(save.monsterXp[monster.id] ?? 0);
+    const shards = save.shards[monster.id] ?? 0;
+    if (!next) { setNotice(monster.name + " เข้าสู่ร่างสมบูรณ์แล้ว"); return; }
+    if (character.level < next.requiredLevel) {
+      setNotice("ต้องฝึก " + monster.name + " ให้ถึง LV." + next.requiredLevel + " ก่อน");
+      return;
+    }
+    if (shards < next.shardCost) {
+      setNotice("ต้องใช้ Shards อีก " + (next.shardCost - shards) + " ชิ้นเพื่อวิวัฒนาการ");
+      return;
+    }
+    setSave((current) => ({
+      ...current,
+      shards: { ...current.shards, [monster.id]: (current.shards[monster.id] ?? 0) - next.shardCost },
+      evolutions: { ...current.evolutions, [monster.id]: next.stage },
+    }));
+    setNotice(monster.name + " วิวัฒนาการเป็น " + next.title + " สำเร็จ!");
+  }
 
   return (
     <div className="app-shell">
@@ -208,7 +269,7 @@ function App() {
 
               <div className="hero-banner">
                 <div className="hero-glow" /><div className="hero-copy"><div className="hero-kicker">✦ THE RUNE AWAKENS ✦</div><h2>พลังแห่งปัญญา<br /><span>เริ่มต้นที่นี่</span></h2><p>รวบรวมเหล่าผู้พิทักษ์ ฝึกฝนไหวพริบ และเขียนตำนานบทใหม่ด้วยคำตอบของคุณ</p><button className="btn btn-gold" onClick={startBattle}>เริ่มการผจญภัย <span>→</span></button></div>
-                <div className="hero-rune rune-one">✦</div><div className="hero-rune rune-two">◇</div><div className="hero-mascot"><div className="mascot-ring" /><Sprite monster={getMonster("noctyra")} size={190} /></div>
+                <div className="hero-rune rune-one">✦</div><div className="hero-rune rune-two">◇</div><div className="hero-mascot"><div className="mascot-ring" /><Sprite monster={getMonster("noctyra")} size={190} stage={getEvolutionStage(save.evolutions.noctyra ?? 0)} /></div>
                 <div className="hero-caption"><span>01 / 06</span><span>THE NIGHTFALL GUARDIAN</span></div>
               </div>
 
@@ -234,7 +295,7 @@ function App() {
               <PageTitle eyebrow="ARENA · SOLO MODE" title="สนามประลอง" subtitle="เลือกทักษะคณิตศาสตร์ แล้วเปลี่ยนคำตอบที่ถูกต้องให้เป็นพลังโจมตี" />
               {!battle ? (
                 <div className="battle-start-panel">
-                  <div className="start-illustration"><div className="start-orbit" /><Sprite monster={selected} size={160} /></div>
+                  <div className="start-illustration"><div className="start-orbit" /><Sprite monster={selected} size={160} stage={getEvolutionStage(save.evolutions[selected.id] ?? 0)} /></div>
                   <div className="start-info"><span className="eyebrow">YOUR PARTNER</span><h2>{selected.name}</h2><p>{selected.epithet} · {ELEMENT_LABEL[selected.element]}</p><div className="mini-stats"><span>HP <b>{selected.stats.hp}</b></span><span>ATK <b>{selected.stats.atk}</b></span><span>DEF <b>{selected.stats.def}</b></span></div><button className="btn btn-gold" onClick={startBattle}>เข้าสู่สนามประลอง <span>→</span></button></div>
                   <div className="arena-notes"><b>กติกาการต่อสู้</b><p>เลือกหมวดโจทย์ → ตอบให้ถูก → สร้างความเสียหายแก่คู่ต่อสู้</p><p>ตอบผิดหรือหมดเวลา คู่ต่อสู้จะโจมตีกลับ</p><small>โหมดฝึกฝน · เล่นคนเดียวกับ AI</small></div>
                 </div>
@@ -244,14 +305,21 @@ function App() {
                     <div className="battle-topline"><span>ARENA 01 · MYSTIC GROVE</span><span className="round-badge">ROUND ACTIVE</span></div>
                     <div className="battlefield">
                       <div className="battle-stars">✦　　 ·　　✧　　　 ✦　　 ·</div>
-                      <div className="enemy-unit"><div className="unit-info enemy-info"><b>{getMonster(battle.enemyId).name}</b><small>WILD GUARDIAN · LV.{save.level}</small><Bar value={battle.enemyHp} max={battle.enemyMaxHp} /></div><Sprite monster={getMonster(battle.enemyId)} size={156} className={battle.phase === "won" ? "sprite-fade" : "sprite-float"} /></div>
-                      <div className="player-unit"><Sprite monster={getMonster(battle.playerId)} size={168} className="sprite-float" /><div className="unit-info player-info"><b>{getMonster(battle.playerId).name}</b><small>YOUR GUARDIAN · LV.{save.level}</small><Bar value={battle.playerHp} max={battle.playerMaxHp} /></div></div>
+                      <div className={"enemy-unit " + (battleEffect?.kind === "hit" || battleEffect?.kind === "critical" ? "unit-hit" : "")}>
+                        <div className="unit-info enemy-info"><b>{getMonster(battle.enemyId).name}</b><small>WILD GUARDIAN · LV.{battle.enemyLevel} · {getEvolutionLabel(battle.enemyEvolution)}</small><Bar value={battle.enemyHp} max={battle.enemyMaxHp} /></div>
+                        <Sprite key={"enemy-" + (battleEffect?.id ?? "idle")} monster={getMonster(battle.enemyId)} stage={battle.enemyEvolution} size={156} className={"sprite-float rarity-aura aura-" + getMonster(battle.enemyId).rarity + (battleEffect?.kind === "hit" || battleEffect?.kind === "critical" ? " sprite-hit" : "")} />
+                      </div>
+                      <div className={"player-unit " + (battleEffect?.kind === "miss" ? "unit-hit" : "")}>
+                        <Sprite key={"player-" + (battleEffect?.id ?? "idle")} monster={getMonster(battle.playerId)} stage={battle.playerEvolution} size={168} className={"sprite-float rarity-aura aura-" + getMonster(battle.playerId).rarity + (battleEffect?.kind === "miss" ? " sprite-hit" : "")} />
+                        <div className="unit-info player-info"><b>{getMonster(battle.playerId).name}</b><small>YOUR GUARDIAN · LV.{battle.playerLevel} · {getEvolutionLabel(battle.playerEvolution)}</small><Bar value={battle.playerHp} max={battle.playerMaxHp} /></div>
+                      </div>
+                      {battleEffect && <div key={battleEffect.id} className={"battle-fx fx-" + battleEffect.kind} aria-live="polite"><span className="fx-spark">✦</span><b>{battleEffect.label}</b><span className="fx-spark">✧</span></div>}
                       <div className="ground ground-left" /><div className="ground ground-right" />
                     </div>
                     <div className="battle-console">
                       {battle.phase === "choose" && <><div className="console-heading"><span className="console-diamond">◆</span><div><b>เลือกท่าโจมตี</b><small>SELECT YOUR MATH SKILL</small></div><span className="combo-pill">COMBO × {battle.streak}</span></div><div className="skill-grid">{categories.map((category) => <button key={category.id} className="skill-card" onClick={() => chooseCategory(category.id)}><strong>{category.glyph}</strong><span>{category.title}</span><small>{category.label}</small></button>)}</div></>}
                       {battle.phase === "question" && battle.question && <div className="question-panel"><div className="question-head"><span>{battle.category === "equation" ? "EQUATION CHALLENGE" : battle.category === "multiply" ? "MULTIPLICATION CHALLENGE" : "ARITHMETIC CHALLENGE"}</span>{save.timed ? <b className={battle.timeLeft <= 5 ? "timer danger" : "timer"}>◷ {battle.timeLeft}s</b> : <b className="timer">UNTIMED</b>}</div><div className="question-expression">{battle.question.prompt}</div><form className="answer-form" onSubmit={(event) => { event.preventDefault(); resolveAnswer(answer); }}><input autoFocus value={answer} onChange={(event) => setAnswer(event.target.value.slice(0, 8))} inputMode="numeric" placeholder="ใส่คำตอบ..." aria-label="คำตอบโจทย์คณิตศาสตร์" /><button className="btn btn-gold" disabled={!answer.trim()}>โจมตี <span>➤</span></button></form><small className="hint-line">✦ {battle.question.hint}</small></div>}
-                      {(battle.phase === "won" || battle.phase === "lost") && <div className="battle-result"><div className="result-emblem">{battle.phase === "won" ? "✦" : "◇"}</div><span className="eyebrow">{battle.phase === "won" ? "VICTORY · +120 COINS · +65 XP" : "DEFEAT · +25 COINS · +10 XP"}</span><h2>{battle.phase === "won" ? "ชัยชนะเป็นของคุณ!" : "กลับไปฝึกฝนอีกครั้ง"}</h2><p>{battle.phase === "won" ? "คุณพิสูจน์พลังแห่งปัญญาได้สำเร็จ" : "ทุกความผิดพลาดคือบทเรียนของนักผจญภัย"}</p><button className="btn btn-gold" onClick={() => { setBattle(null); setView("home"); }}>กลับหน้าหลัก <span>→</span></button><button className="btn btn-ghost" onClick={() => { setBattle(null); startBattle(); }}>สู้อีกครั้ง</button></div>}
+                      {(battle.phase === "won" || battle.phase === "lost") && <div className="battle-result"><div className="result-emblem">{battle.phase === "won" ? "✦" : "◇"}</div><span className="eyebrow">{battle.phase === "won" ? "VICTORY · +120 COINS · +65 XP · +35 GUARDIAN XP" : "DEFEAT · +25 COINS · +10 XP · +12 GUARDIAN XP"}</span><h2>{battle.phase === "won" ? "ชัยชนะเป็นของคุณ!" : "กลับไปฝึกฝนอีกครั้ง"}</h2><p>{battle.phase === "won" ? "คุณพิสูจน์พลังแห่งปัญญาได้สำเร็จ" : "ทุกความผิดพลาดคือบทเรียนของนักผจญภัย"}</p><button className="btn btn-gold" onClick={() => { setBattle(null); setView("home"); }}>กลับหน้าหลัก <span>→</span></button><button className="btn btn-ghost" onClick={() => { setBattle(null); startBattle(); }}>สู้อีกครั้ง</button></div>}
                     </div>
                   </div>
                   <aside className="battle-log"><div className="log-title"><b>บันทึกการต่อสู้</b><small>BATTLE LOG</small></div>{battle.log.map((line, index) => <p key={index} className={index === 0 ? "log-current" : ""}>› {line}</p>)}<div className="battle-log-tip">TIP: การตอบถูกต่อเนื่องจะเพิ่มคอมโบและความเสียหาย</div></aside>
@@ -263,16 +331,17 @@ function App() {
           {view === "summon" && (
             <section className="view-stack">
               <PageTitle eyebrow="RUNE ALTAR · SUMMONING GATE" title="แท่นอัญเชิญ" subtitle="เรียกผู้พิทักษ์จากเศษเสี้ยวแห่งรูน — ใช้เหรียญที่ได้รับจากการเล่นเท่านั้น" />
-              <div className="summon-stage">
-                <div className="summon-stars">✦　·　✧　　　✦　　·　✦</div><div className="portal portal-back" /><div className="portal portal-front" /><div className="portal-core">N</div>
+              <div className={"summon-stage " + (summonBusy ? "is-summoning" : "")}>
+                <div className="summon-stars">✦　·　✧　　　✦　　·　✦</div>
+                <div className="summon-particle-cloud" aria-hidden="true"><span>✦</span><span>✧</span><span>✦</span><span>·</span><span>✧</span><span>✦</span><span>·</span><span>✧</span></div><div className="portal portal-back" /><div className="portal portal-front" /><div className="portal-core">N</div>
                 <div className="summon-rune rune-a">◇</div><div className="summon-rune rune-b">✧</div><div className="summon-rune rune-c">✦</div>
-                <div className="summon-stage-copy"><span className="eyebrow">THE ANCIENT RUNE ALTAR</span><h2>โชคชะตา<br /><em>รอการปลุกตื่น</em></h2><p>ทุกการอัญเชิญคือโอกาสพบผู้พิทักษ์คนใหม่</p></div>
-                <div className="summon-stage-foot"><span>ANCIENT GATE · 001</span><span>COIN ONLY · NO REAL MONEY</span></div>
+                <div className="summon-stage-copy"><span className="eyebrow">THE ANCIENT RUNE ALTAR · 5 RARITIES</span><h2>โชคชะตา<br /><em>รอการปลุกตื่น</em></h2><p>ทุกการอัญเชิญคือโอกาสพบผู้พิทักษ์คนใหม่</p></div>
+                <div className="summon-stage-foot"><span>ANCIENT GATE · 001</span><span>COMMON → MYTHIC · COIN ONLY</span></div>
               </div>
-              <div className="summon-toolbar"><div><span className="eyebrow">YOUR WALLET</span><h3>◈ {save.coins.toLocaleString("en-US")} <small>COINS</small></h3></div><div className="pity-group"><div><small>EPIC+ GUARANTEE</small><b>{save.epicPity}/10</b><Bar value={save.epicPity} max={10} tone="xp" /></div><div><small>LEGENDARY GUARANTEE</small><b>{save.legendaryPity}/50</b><Bar value={save.legendaryPity} max={50} tone="xp" /></div></div></div>
+              <div className="summon-toolbar"><div><span className="eyebrow">YOUR WALLET</span><h3>◈ {save.coins.toLocaleString("en-US")} <small>COINS</small></h3></div><div className="pity-group"><div><small>EPIC+ GUARANTEE</small><b>{save.epicPity}/10</b><Bar value={save.epicPity} max={10} tone="xp" /></div><div><small>LEGENDARY+ GUARANTEE</small><b>{save.legendaryPity}/50</b><Bar value={save.legendaryPity} max={50} tone="xp" /></div><div><small>MYTHIC GUARANTEE</small><b>{save.mythicPity}/100</b><Bar value={save.mythicPity} max={100} tone="xp" /></div></div></div>
               <div className="summon-actions"><button className="btn btn-violet" disabled={summonBusy || save.coins < SUMMON_COST.single} onClick={() => performSummon(1)}><span>✧</span> อัญเชิญ 1 ครั้ง <small>◈ {SUMMON_COST.single}</small></button><button className="btn btn-gold" disabled={summonBusy || save.coins < SUMMON_COST.ten} onClick={() => performSummon(10)}><span>✦</span> อัญเชิญ 10 ครั้ง <small>◈ {SUMMON_COST.ten} · SAVE 100</small></button><button className="text-button" onClick={() => setShowRates(!showRates)}>{showRates ? "ซ่อนอัตราสุ่ม" : "ดูอัตราสุ่มและกติกาการันตี"}　⌄</button></div>
-              {showRates && <div className="rates-panel"><div className="section-heading"><div><span className="eyebrow">TRANSPARENCY FIRST</span><h2>อัตราการอัญเชิญ</h2></div></div><div className="rate-list">{(["legendary", "epic", "rare", "common"] as Rarity[]).map((rarity) => <div key={rarity} className="rate-row"><span className="rarity-dot" style={{ background: RARITY_COLOR[rarity] }} /><b>{rarityText(rarity)}</b><strong>{BASE_RATES[rarity]}%</strong></div>)}</div><p className="fine-print">อัตราด้านบนคืออัตราพื้นฐานก่อนใช้ระบบการันตี การันตี Epic ขึ้นไปเมื่อสะสม 10 ครั้งโดยไม่ได้ Epic+ และการันตี Legendary เมื่อสะสม 50 ครั้งโดยไม่ได้ Legendary ระบบจะรีเซ็ตตัวนับตามผลที่ได้รับจริง</p></div>}
-              {summonResults.length > 0 && <div className="summon-results"><div className="section-heading"><div><span className="eyebrow">NEW ARRIVALS</span><h2>ผลการอัญเชิญ</h2></div><button className="text-button" onClick={() => setSummonResults([])}>ล้างผลลัพธ์ ×</button></div><div className="results-grid">{summonResults.map((result, index) => <div className={"result-card rarity-" + result.monster.rarity} key={result.monster.id + "-" + index}><div className="result-rarity">{result.guaranteed ? "✦ GUARANTEED" : rarityText(result.monster.rarity)}</div><Sprite monster={result.monster} size={88} /><b>{result.monster.name}</b><small>{result.monster.epithet}</small>{result.duplicate ? <span className="duplicate-tag">ซ้ำ +{result.shards} SHARDS</span> : <span className="new-tag">NEW GUARDIAN</span>}</div>)}</div></div>}
+              {showRates && <div className="rates-panel"><div className="section-heading"><div><span className="eyebrow">TRANSPARENCY FIRST</span><h2>อัตราการอัญเชิญ</h2></div></div><div className="rate-list">{(["mythic", "legendary", "epic", "rare", "common"] as Rarity[]).map((rarity) => <div key={rarity} className="rate-row"><span className="rarity-dot" style={{ background: RARITY_COLOR[rarity] }} /><b>{rarityText(rarity)}</b><strong>{BASE_RATES[rarity]}%</strong></div>)}</div><p className="fine-print">อัตราด้านบนคืออัตราพื้นฐานก่อนใช้ระบบการันตี: Epic+ เมื่อสะสม 10 ครั้ง, Legendary+ เมื่อสะสม 50 ครั้ง และ Mythic เมื่อสะสม 100 ครั้งโดยไม่ได้ระดับนั้น ระบบจะรีเซ็ตตามผลที่ได้รับจริง</p></div>}
+              {summonResults.length > 0 && <div className="summon-results"><div className="section-heading"><div><span className="eyebrow">NEW ARRIVALS</span><h2>ผลการอัญเชิญ</h2></div><button className="text-button" onClick={() => setSummonResults([])}>ล้างผลลัพธ์ ×</button></div><div className="results-grid">{summonResults.map((result, index) => <div className={"result-card rarity-" + result.monster.rarity} key={result.monster.id + "-" + index} style={{ animationDelay: Math.min(index, 9) * 90 + "ms" }}><div className="result-rarity">{result.guaranteed ? "✦ GUARANTEED" : rarityText(result.monster.rarity)}</div><Sprite monster={result.monster} size={88} /><b>{result.monster.name}</b><small>{result.monster.epithet}</small>{result.duplicate ? <span className="duplicate-tag">ซ้ำ +{result.shards} SHARDS</span> : <span className="new-tag">NEW GUARDIAN</span>}</div>)}</div></div>}
               <div className="summon-footnote">เหรียญได้รับจากชัยชนะและกิจกรรมภายในเกม · ไม่มีการซื้อด้วยเงินจริง · ตัวซ้ำจะเปลี่ยนเป็น Shards โดยอัตโนมัติ</div>
             </section>
           )}
@@ -281,8 +350,8 @@ function App() {
             <section className="view-stack">
               <PageTitle eyebrow="GUARDIAN ARCHIVE · COLLECTION" title="สมุดผู้พิทักษ์" subtitle="เหล่ามอนสเตอร์ที่คุณได้พบเจอ อัปเกรด และร่วมเดินทาง" />
               <div className="collection-summary"><div><strong>{ownedMonsters.length}</strong><span>OWNED GUARDIANS</span></div><div><strong>{MONSTERS.length - ownedMonsters.length}</strong><span>UNDISCOVERED</span></div><div><strong>{Object.values(save.shards).reduce((a, b) => a + b, 0)}</strong><span>TOTAL SHARDS</span></div></div>
-              <div className="collection-filters"><div><span>RARITY</span><select value={filterRarity} onChange={(e) => setFilterRarity(e.target.value as "all" | Rarity)}><option value="all">ทุกระดับ</option><option value="common">Common</option><option value="rare">Rare</option><option value="epic">Epic</option><option value="legendary">Legendary</option></select></div><div><span>ELEMENT</span><select value={filterElement} onChange={(e) => setFilterElement(e.target.value)}><option value="all">ทุกธาตุ</option>{Object.entries(ELEMENT_LABEL).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div><button className="btn btn-ghost btn-small" onClick={() => { setFilterRarity("all"); setFilterElement("all"); }}>รีเซ็ตตัวกรอง</button></div>
-              <div className="monster-grid">{displayedMonsters.map((monster) => { const level = save.upgrades[monster.id] ?? 0; const shardCount = save.shards[monster.id] ?? 0; const cost = upgradeCost(level); return <article className={"monster-card rarity-" + monster.rarity} key={monster.id} onClick={() => setSelectedDetail(monster.id)} tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") setSelectedDetail(monster.id); }}><div className="monster-card-top"><span className="rarity-label">{rarityText(monster.rarity)}</span><span className="element-label">{ELEMENT_LABEL[monster.element]}</span></div><div className="monster-art"><div className="art-glow" /><Sprite monster={monster} size={118} /></div><div className="monster-card-info"><h3>{monster.name}</h3><p>{monster.epithet}</p><div className="monster-card-meta"><span>ATK {monster.stats.atk + level * 2}</span><span>LV.{level + 1}</span></div><div className="shard-line">✧ {shardCount} / {level >= 5 ? "MAX" : cost} SHARDS</div></div></article>; })}</div>
+              <div className="collection-filters"><div><span>RARITY</span><select value={filterRarity} onChange={(e) => setFilterRarity(e.target.value as "all" | Rarity)}><option value="all">ทุกระดับ</option><option value="common">Common</option><option value="rare">Rare</option><option value="epic">Epic</option><option value="legendary">Legendary</option><option value="mythic">Mythic</option></select></div><div><span>ELEMENT</span><select value={filterElement} onChange={(e) => setFilterElement(e.target.value)}><option value="all">ทุกธาตุ</option>{Object.entries(ELEMENT_LABEL).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div><button className="btn btn-ghost btn-small" onClick={() => { setFilterRarity("all"); setFilterElement("all"); }}>รีเซ็ตตัวกรอง</button></div>
+               <div className="monster-grid">{displayedMonsters.map((monster) => { const upgradeLevel = save.upgrades[monster.id] ?? 0; const character = getCharacterProgress(save.monsterXp[monster.id] ?? 0); const shardCount = save.shards[monster.id] ?? 0; const cost = upgradeCost(upgradeLevel); const evolutionStage = getEvolutionStage(save.evolutions[monster.id] ?? 0); const evolutionBonus = getEvolutionBonus(evolutionStage); return <article className={"monster-card rarity-" + monster.rarity + " evolve-stage-" + evolutionStage} key={monster.id} onClick={() => setSelectedDetail(monster.id)} tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") setSelectedDetail(monster.id); }}><div className="monster-card-top"><span className="rarity-label">{rarityText(monster.rarity)}</span><span className="element-label">{ELEMENT_LABEL[monster.element]}</span></div><div className="evolution-ribbon">{getEvolutionLabel(evolutionStage)}</div><div className="monster-art"><div className="art-glow" /><Sprite monster={monster} stage={evolutionStage} size={118} className={"rarity-aura aura-" + monster.rarity} /></div><div className="monster-card-info"><h3>{monster.name}</h3><p>{evolutionStage > 0 ? getEvolutionTitle(evolutionStage) : monster.epithet}</p><div className="monster-card-meta"><span>ATK {monster.stats.atk + upgradeLevel * 2 + Math.floor(character.level / 5) + evolutionBonus.atk}</span><span>LV.{character.level}</span></div><div className="character-xp-track"><i style={{ width: character.progress + "%" }} /></div><div className="shard-line">✧ {shardCount} / {upgradeLevel >= 5 ? "MAX" : cost} SHARDS · UPGRADE {upgradeLevel}/5</div></div></article>; })}</div>
               {displayedMonsters.length === 0 && <div className="empty-state"><span>◇</span><b>ยังไม่มีผู้พิทักษ์ในหมวดนี้</b><p>ลองเปลี่ยนตัวกรองหรือไปที่แท่นอัญเชิญ</p><button className="btn btn-violet" onClick={() => setView("summon")}>ไปอัญเชิญ <span>→</span></button></div>}
             </section>
           )}
@@ -313,8 +382,8 @@ function App() {
         <div className="modal-backdrop" onClick={() => setSelectedDetail(null)}>
           <div className={"monster-modal rarity-" + detailMonster.rarity} onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setSelectedDetail(null)}>×</button>
-            <div className="modal-art"><div className="art-glow" /><Sprite monster={detailMonster} size={174} /></div>
-            <div className="modal-copy"><span className="rarity-label">{rarityText(detailMonster.rarity)} · {ELEMENT_LABEL[detailMonster.element]}</span><h2>{detailMonster.name}</h2><p className="modal-epithet">{detailMonster.epithet}</p><p>{detailMonster.lore}</p><div className="modal-stats"><span>HP <b>{detailMonster.stats.hp + (save.upgrades[detailMonster.id] ?? 0) * 5}</b></span><span>ATK <b>{detailMonster.stats.atk + (save.upgrades[detailMonster.id] ?? 0) * 2}</b></span><span>DEF <b>{detailMonster.stats.def}</b></span></div><div className="skill-description"><small>PASSIVE SKILL</small><b>{detailMonster.skill}</b></div><div className="upgrade-box"><div><small>CHARACTER SHARDS</small><b>✧ {save.shards[detailMonster.id] ?? 0} / {upgradeCost(save.upgrades[detailMonster.id] ?? 0)}</b></div><button className="btn btn-violet btn-small" disabled={(save.upgrades[detailMonster.id] ?? 0) >= 5 || (save.shards[detailMonster.id] ?? 0) < upgradeCost(save.upgrades[detailMonster.id] ?? 0)} onClick={() => upgradeMonster(detailMonster)}>อัปเกรด · {upgradeCost(save.upgrades[detailMonster.id] ?? 0)} Shards</button></div><div className="modal-actions"><button className="btn btn-gold" onClick={() => { setSave({ ...save, selected: detailMonster.id }); setSelectedDetail(null); setNotice("เลือก " + detailMonster.name + " เป็นคู่หูหลักแล้ว"); }}>เลือกเป็นคู่หู</button><button className="btn btn-ghost" onClick={() => setSelectedDetail(null)}>ปิด</button></div></div>
+            <div className={"modal-art evolve-stage-" + detailEvolutionStage}><div className="art-glow" /><Sprite monster={detailMonster} stage={detailEvolutionStage} size={190} className={"rarity-aura aura-" + detailMonster.rarity} /><div className="modal-evolution-tag">{getEvolutionLabel(detailEvolutionStage)}</div></div>
+            <div className="modal-copy"><span className="rarity-label">{rarityText(detailMonster.rarity)} · {ELEMENT_LABEL[detailMonster.element]}</span><h2>{detailMonster.name}</h2><p className="modal-epithet">{detailEvolutionStage > 0 ? getEvolutionTitle(detailEvolutionStage) + " · " + detailMonster.epithet : detailMonster.epithet}</p><p>{detailMonster.lore}</p><div className="character-level-panel"><div><small>CHARACTER LEVEL</small><b>LV. {detailProgress?.level ?? 1}{detailProgress?.maxed ? " · MAX" : ""}</b></div><div className="character-level-bar"><i style={{ width: (detailProgress?.progress ?? 0) + "%" }} /></div><small>{detailProgress?.maxed ? "ถึงระดับสูงสุดแล้ว" : (detailProgress?.xp ?? 0) + " / " + (detailProgress?.nextXp ?? 100) + " XP · รับจากการต่อสู้"}</small></div><div className="modal-stats"><span>HP <b>{detailMonster.stats.hp + (save.upgrades[detailMonster.id] ?? 0) * 5 + detailEvolutionBonus.hp}</b></span><span>ATK <b>{detailMonster.stats.atk + (save.upgrades[detailMonster.id] ?? 0) * 2 + Math.floor((detailProgress?.level ?? 1) / 5) + detailEvolutionBonus.atk}</b></span><span>DEF <b>{detailMonster.stats.def + detailEvolutionBonus.def}</b></span></div><div className="skill-description"><small>PASSIVE SKILL</small><b>{detailMonster.skill}</b></div><div className={"evolution-box evolution-stage-" + detailEvolutionStage}><div className="evolution-box-heading"><div><small>EVOLUTION PATH</small><b>{getEvolutionTitle(detailEvolutionStage)}</b></div><span>{getEvolutionLabel(detailEvolutionStage)}</span></div><div className="evolution-track">{[0,1,2,3].map((stage) => <i key={stage} className={stage <= detailEvolutionStage ? "reached" : ""}>{stage === 0 ? "I" : stage === 1 ? "II" : stage === 2 ? "III" : "★"}</i>)}</div><p>{nextEvolution ? nextEvolution.description + " · ต้องถึง LV." + nextEvolution.requiredLevel + " และใช้ " + nextEvolution.shardCost + " Shards" : "ปลดปล่อยพลังสูงสุดแล้ว — นี่คือร่างแท้จริงของผู้พิทักษ์"}</p><button className="btn btn-evolve btn-small" disabled={!nextEvolution || (detailProgress?.level ?? 1) < (nextEvolution?.requiredLevel ?? 999) || detailShardCount < (nextEvolution?.shardCost ?? 999)} onClick={() => evolveMonster(detailMonster)}>{!nextEvolution ? "✦ FINAL FORM UNLOCKED" : (detailProgress?.level ?? 1) < nextEvolution.requiredLevel ? "ต้องการ LV." + nextEvolution.requiredLevel : detailShardCount < nextEvolution.shardCost ? "ขาด " + (nextEvolution.shardCost - detailShardCount) + " SHARDS" : "✧ วิวัฒนาการ · " + nextEvolution.title + " (" + nextEvolution.shardCost + " Shards)"}</button></div><div className="upgrade-box"><div><small>CHARACTER SHARDS</small><b>✧ {save.shards[detailMonster.id] ?? 0} / {upgradeCost(save.upgrades[detailMonster.id] ?? 0)}</b></div><button className="btn btn-violet btn-small" disabled={(save.upgrades[detailMonster.id] ?? 0) >= 5 || (save.shards[detailMonster.id] ?? 0) < upgradeCost(save.upgrades[detailMonster.id] ?? 0)} onClick={() => upgradeMonster(detailMonster)}>อัปเกรด · {upgradeCost(save.upgrades[detailMonster.id] ?? 0)} Shards</button></div><div className="modal-actions"><button className="btn btn-gold" onClick={() => { setSave({ ...save, selected: detailMonster.id }); setSelectedDetail(null); setNotice("เลือก " + detailMonster.name + " เป็นคู่หูหลักแล้ว"); }}>เลือกเป็นคู่หู</button><button className="btn btn-ghost" onClick={() => setSelectedDetail(null)}>ปิด</button></div></div>
           </div>
         </div>
       )}

@@ -5,6 +5,7 @@ interface Props {
   monster: Monster;
   size?: number;
   className?: string;
+  stage?: number;
 }
 
 /**
@@ -223,6 +224,123 @@ const PIXEL_ART: Record<Shape, string[]> = {
     "..obbbbabb bbbbo..".replace(/ /g, ""),
     "...ooo......ooo...",
   ],
+  beetle: [
+    ".....oooooo.....",
+    "....oabbbbao....",
+    "...oobbbbbboo...",
+    "..oobllbbllboo..",
+    ".oobbbbbbbbbboo.",
+    "oobbbbbebbbbbboo",
+    "obbbbbbbbbbbbbbo",
+    ".obbbbbabbbbbbo.",
+    "..oobbbbbbbboo..",
+    "...oo......oo...",
+  ],
+  deer: [
+    "o..o......o..o",
+    "oaoo......ooao",
+    ".oaboo....oobao",
+    "..oabbb..bbbao..",
+    "...oobbbbbboo...",
+    "..oobbbllbbboo..",
+    "..obbbbebbbbo...",
+    "...obbbbbbbbo...",
+    "....obbbabbo....",
+    "....oobbbboo....",
+    "...oo......oo...",
+    "..oo........oo..",
+  ],
+  manta: [
+    "......oooo......",
+    ".....oabbao.....",
+    "...ooobbbboo....",
+    "..oobbbbbbbboo..",
+    ".oobbbbllbbbbboo.",
+    "oobbbbbbbbbbbbbboo",
+    "obbbbbebbbbbbbbbbo",
+    ".obbbbbbbbbbbbbbbo.",
+    "..obbbbbabbbbbbo..",
+    "...oobbbbbbbboo...",
+    ".....oo....oo.....",
+  ],
+  samurai: [
+    ".....oooooo.....",
+    "....oabbbb ao....".replace(/ /g, ""),
+    "...oobbbbbbbb o...".replace(/ /g, ""),
+    "..oobllbbbbllboo..",
+    "...obbbbebbbbo....",
+    "....obbbbbbbbo....",
+    "...oobbbbabbbboo...",
+    "..oobbbbbbbbbboo..",
+    "..obbbboobbbbo...",
+    "...oo..oo..oo...",
+    "...oo......oo...",
+  ],
+  wisp: [
+    "......oooo......",
+    ".....oabbao.....",
+    "....oabbbbbao....",
+    "...oobbbllbbboo...",
+    "...obbbbebbbbo....",
+    "....obbbbbbo.....",
+    "....obbbabbo.....",
+    "...oobbbbbboo....",
+    "..oobbo..obboo...",
+    ".oo..........oo.",
+    "........oo......",
+  ],
+  phoenix: [
+    "....oo......oo....",
+    "...oabo....oabo...",
+    "..oabbbbo..obbb ao".replace(/ /g, ""),
+    ".oobbbbbboobbbbbboo.",
+    "oobbbllbbbbllbbbboo",
+    "obbbbbbbbbbbbbbbbo",
+    "..obbbbebbbbbo...",
+    "...obbbbbbbbo....",
+    "....obbbabbo.....",
+    "...oo..oo..oo...",
+    "..oo........oo..",
+  ],
+  hydra: [
+    "..oooo....oooo....",
+    ".oabbao..oabbao...",
+    "..obbbbo..obbbbo..",
+    "...oobbbbbbbboo...",
+    "....obbbbbbbbo....",
+    "..oobbbllbbllbbboo..",
+    ".oobbbbbebbbbbbbboo.",
+    "obbbbbbbbbbbbbbbbbbo",
+    ".obbbbbbbbbbbbbbbbo.",
+    "..obbbbabbbbbbo...",
+    "...oobbbbbbbboo...",
+    "....oo......oo....",
+  ],
+  clockwork: [
+    "....oooooooo....",
+    "...oabbbbbbao...",
+    "..oobllbbllbboo..",
+    ".oobbbbbbbbbbbboo.",
+    "obbbbbebbbbbbbbbo",
+    "obbbbabbbbabb bbbo".replace(/ /g, ""),
+    "obbbbbbbbbbbbbbbbo",
+    ".obbbbbbbbbbbbbo.",
+    "..obbbboobbbbo...",
+    "...ooo......ooo...",
+  ],
+  angel: [
+    "oo............oo",
+    "oaoo........ooao",
+    ".oaboo......oobao",
+    "..oabbbboobbbbao..",
+    "...oobbbllbbboo...",
+    "....obbbbebbo....",
+    "....obbbbbbo.....",
+    "...oobbbabbbboo...",
+    "..oobbbbbbbbbboo..",
+    "..oo..obbo..oo....",
+    ".oo...oo..oo...oo.",
+  ],
   crystal: [
     ".......oo.......",
     "......oabo......",
@@ -256,7 +374,7 @@ function centerRow(row: string): string {
   return ".".repeat(left) + trimmed + ".".repeat(16 - left - trimmed.length);
 }
 
-export default function Sprite({ monster, size = 116, className = "" }: Props) {
+export default function Sprite({ monster, size = 116, className = "", stage = 0 }: Props) {
   const rows = PIXEL_ART[monster.shape].map(centerRow);
   const pixels: Array<{ x: number; y: number; color: string }> = [];
 
@@ -274,18 +392,57 @@ export default function Sprite({ monster, size = 116, className = "" }: Props) {
     filter: "drop-shadow(0 5px 0 rgba(0,0,0,.35))",
   };
 
+  const evolution = Math.max(0, Math.min(3, Math.floor(stage)));
+  const accents: Array<{ x: number; y: number; w: number; h: number; color: string }> = [];
+  const wings: Array<{ x: number; y: number; w: number; h: number; color: string }> = [];
+  if (evolution >= 1) accents.push(
+    { x: 6, y: 0, w: 4, h: 1, color: monster.colors.accent },
+    { x: 7, y: -1, w: 2, h: 1, color: monster.colors.light },
+    { x: 1, y: 7, w: 2, h: 2, color: monster.colors.accent },
+    { x: 13, y: 7, w: 2, h: 2, color: monster.colors.accent },
+    { x: 3, y: 12, w: 2, h: 1, color: monster.colors.light },
+    { x: 11, y: 12, w: 2, h: 1, color: monster.colors.light },
+  );
+  if (evolution >= 2) wings.push(
+    { x: 0, y: 4, w: 3, h: 1, color: monster.colors.light },
+    { x: -1, y: 5, w: 4, h: 2, color: monster.colors.body },
+    { x: 0, y: 7, w: 3, h: 1, color: monster.colors.accent },
+    { x: 13, y: 4, w: 3, h: 1, color: monster.colors.light },
+    { x: 13, y: 5, w: 4, h: 2, color: monster.colors.body },
+    { x: 13, y: 7, w: 3, h: 1, color: monster.colors.accent },
+    { x: 5, y: 1, w: 2, h: 1, color: monster.colors.accent },
+    { x: 9, y: 1, w: 2, h: 1, color: monster.colors.accent },
+  );
+  if (evolution >= 3) wings.push(
+    { x: -2, y: 3, w: 4, h: 1, color: monster.colors.light },
+    { x: -2, y: 4, w: 5, h: 1, color: monster.colors.accent },
+    { x: -3, y: 5, w: 5, h: 2, color: monster.colors.body },
+    { x: -2, y: 7, w: 4, h: 1, color: monster.colors.shade },
+    { x: 14, y: 3, w: 4, h: 1, color: monster.colors.light },
+    { x: 13, y: 4, w: 5, h: 1, color: monster.colors.accent },
+    { x: 14, y: 5, w: 5, h: 2, color: monster.colors.body },
+    { x: 14, y: 7, w: 4, h: 1, color: monster.colors.shade },
+    { x: 6, y: -2, w: 4, h: 1, color: monster.colors.light },
+    { x: 5, y: -1, w: 6, h: 1, color: monster.colors.accent },
+    { x: 7, y: -3, w: 2, h: 1, color: monster.colors.light },
+    { x: 2, y: 14, w: 3, h: 1, color: monster.colors.accent },
+    { x: 11, y: 14, w: 3, h: 1, color: monster.colors.accent },
+  );
   return (
     <svg
-      className={"sprite pixel-sprite " + className}
+      className={"sprite pixel-sprite evolve-sprite evolve-stage-" + evolution + " " + className}
       style={style}
-      viewBox="0 0 16 16"
+      viewBox={evolution >= 3 ? "-3 -3 22 22" : evolution >= 2 ? "-1 -1 18 18" : "0 0 16 16"}
       role="img"
-      aria-label={monster.name}
+      aria-label={monster.name + (evolution ? " " + ["", "Awakened", "Ascendant", "Ultimate"][evolution] : "")}
       shapeRendering="crispEdges"
     >
+      {wings.map((part, index) => <rect key={"wing-" + index} x={part.x} y={part.y} width={part.w} height={part.h} fill={part.color} stroke={monster.colors.shade} strokeWidth=".25" />)}
       {pixels.map((pixel) => (
         <rect key={pixel.x + "-" + pixel.y} x={pixel.x} y={pixel.y} width="1" height="1" fill={pixel.color} />
       ))}
+      {accents.map((part, index) => <rect key={"armor-" + index} x={part.x} y={part.y} width={part.w} height={part.h} fill={part.color} stroke={monster.colors.shade} strokeWidth=".25" />)}
+      {evolution >= 3 && <g fill="none" stroke={monster.colors.light} strokeWidth=".55" opacity=".95"><path d="M4 -1 H12 M3 0 H13 M4 1 H12" /><path d="M2 3 L0 1 M14 3 L16 1" /></g>}
     </svg>
   );
 }
